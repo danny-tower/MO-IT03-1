@@ -40,6 +40,28 @@ This is a Java Swing desktop application that allows you to manage Employees, Pa
 - Java Development Kit (JDK) 8 or higher installed  
 - A command-line terminal (PowerShell, CMD, bash, etc.)
 
+**##Objectives**
+- To automate payroll processing and reduce manual computation errors
+- To track and log employee attendance efficiently
+- To generate printable payroll reports and summaries
+- To ensure secure and role-specific access for system users
+
+**##Technologies Used**
+- **Programming Language:** Java
+- **GUI Framework:** Java Swing
+- **Database:** MySQL or SQLite
+- **Report Tools:** iText for PDF generation, Apache POI (optional for Excel export)
+
+---
+****USER ROLES****
+| Role                  | Responsibilities                                      |
+| --------------------- | ----------------------------------------------------- |
+| **Admin**             | Full access to all modules, user and data management  |
+| **HR Staff**          | Manage employee profiles and schedules                |
+| **Finance & Payroll** | Compute salaries, generate reports, manage deductions |
+| **Department Head**   | View and approve employee attendance and overtime     |
+| **Employee**          | View personal attendance and payslip                  |
+
 ---
 
 ## How to Compile & Run
@@ -85,6 +107,11 @@ MO-IT03/
 ├ payroll.csv
 ├ leaverequests.csv
 └ README.md
+---
+
+**Academic Purpose**
+This project was developed as part of our coursework for Computer Programming 2, under the guidance of Mr. John Ray Hernani, and is intended to demonstrate knowledge in software engineering, database integration, and desktop application development.
+
 
 Author / Contact
 Ghian Renzen Arboleda
