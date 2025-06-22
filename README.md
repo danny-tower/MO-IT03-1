@@ -1,79 +1,94 @@
-# MotorPH Employee App
+# MotorPH Employee App (GUI Version)
 
-This is a simple Java-based payroll management and employee app system built for the MotorPH IT03 project.
+## Overview  
+This is a Java Swing desktop application that allows you to manage Employees, Payroll, and Leave Requests using full Create/Read/Update/Delete (CRUD) functionality. A simple login screen secures access. All data is stored in plain CSV files:  
+- `accounts.csv`  
+- `employees.csv`  
+- `payroll.csv`  
+- `leaverequests.csv`  
 
-**Project Overview**
-The MotorPH Employee Management System represents a Java-based desktop application specifically designed to efficiently manage employee payroll, attendance, and salary components for MotorPH. This system features a graphical user interface (GUI) developed using Java Swing, which facilitates the streamlining of various human resources tasks, including attendance logging, payroll calculation, and reporting.
-
-**Project Goals**
--Automate Payroll Processing
-Eliminate manual computation of salaries by automating the calculation of gross pay, deductions (tax, SSS, etc.), overtime, and bonuses based on attendance data.
--Simplify Employee Attendance Tracking
-Provide a user-friendly interface for logging employee time-in and time-out records to ensure accurate and real-time attendance data.
--Enable Accurate and Transparent Reporting
-Generate payroll reports and breakdowns (daily, weekly, monthly) that are easy to interpret and can be exported as CSV or PDF for official records.
--Ensure Data Security and Access Control
-Protect payroll data with a secure login system, allowing only authorized users (e.g., HR/Admin) to access and manage sensitive employee information.
--Enhance Usability Through GUI Design
-Deliver a desktop-based system with a clean, intuitive Java Swing interface tailored for HR or payroll personnel without requiring technical expertise.
--Support Modular and Maintainable Development
-Design the application in a modular fashion to allow future enhancements such as database integration, multi-user access, and audit logs.
-
-Key Features
-
-Attendance Logging – Tracks employee check-in/out times
-
-Payroll Calculation – Automates salary computation based on attendance and pay rules
-
-Breakdown Display – Shows daily hours worked, deductions, bonuses
-
- Export Reports – Generates payroll summaries in CSV or PDF
-
- Swing GUI Interface – Easy-to-use desktop interface for non-technical users
+---
 
 ## Features
 
-- Java Swing GUI for payroll
-- Attendance logging
-- overtime, tax, deduction calculations
-- Admin authentication
+**1. Login Screen**  
+- Credentials are loaded from `accounts.csv` (username,password)  
+  - Default: `admin,admin123`  
+- If login fails or is canceled, the application exits.
 
-##  Project Structure
-motorphemployeeapp/
-├── src/
-│ └── your Java classes
-├── README.md
+**2. Employees Tab**  
+- **View:** displays all employees (ID, Name, Position)  
+- **Add:** enter ID, Name, Position and click **Add**  
+- **Update:** select a row, click **Update**, edit fields, and save  
+- **Delete:** select a row and click **Delete** to remove that employee
 
-Initial Architecture Diagram (Text Description)
-+------------------------+
-|      User/Admin       |
-+-----------+------------+
-            |
-            v
-+-----------+------------+
-|       Java Swing GUI   |
-| (Login, Attendance,    |
-|  Payroll Screens)      |
-+-----------+------------+
-            |
-            v
-+-----------+------------+
-|   Application Logic    |
-| (Controllers/Services) |
-+-----------+------------+
-            |
-     +------+------+
-     |             |
-     v             v
-+----+----+    +---+-----------------+
-| Payroll |    | Attendance Manager  |
-| Engine  |    | (Time-in/out Logs)  |
-+----+----+    +---+-----------------+
-     |              |
-     v              v
-+-------------------+---------------+
-|   In-Memory Data Store or Files   |
-|  (CSV, TXT, or Serialized Objects)|
-+-----------------------------------+
+**3. Payroll Tab**  
+- **View:** displays all payroll entries (Employee ID, Amount)  
+- **Add:** enter Employee ID and Amount and click **Add**  
+- **Update:** select a row, click **Update**, enter new amount, and save  
+- **Delete:** select a row and click **Delete** to remove that entry
 
+**4. Leave Requests Tab**  
+- **View:** displays all leave requests (Employee ID, Start Date, End Date, Reason)  
+- **Submit:** fill in fields and click **Submit** to add a request  
+- **Update:** select a row, click **Update**, edit dates/reason, and save  
+- **Delete:** select a row and click **Delete** to remove that request
 
+---
+
+## Prerequisites  
+- Java Development Kit (JDK) 8 or higher installed  
+- A command-line terminal (PowerShell, CMD, bash, etc.)
+
+---
+
+## How to Compile & Run
+
+```bash
+cd path/to/MO-IT03
+javac -d . motorphemployeeapp/src/com/motorph/employeeapp/*.java
+java com.motorph.employeeapp.AppGUI
+
+Compile all source files with -d . to mirror package structure.
+
+Run the main class.
+
+Login using credentials from accounts.csv (default admin/admin123).
+
+CSV Files
+accounts.csv
+username,password
+admin,admin123
+
+employees.csv
+ID,Name,Position
+
+payroll.csv
+EmployeeID,Amount
+
+leaverequests.csv
+EmployeeID,StartDate,EndDate,Reason
+
+Project Structure
+MO-IT03/
+├ .github/
+├ motorphemployeeapp/
+│ └ src/com/motorph/employeeapp/
+│ ├ AppGUI.java
+│ ├ LoginDialog.java
+│ ├ Department.java
+│ ├ ValidatedEmployeeGUI.java
+│ ├ ValidatedPayrollGUI.java
+│ └ ValidatedLeaveRequestGUI.java
+├ accounts.csv
+├ employees.csv
+├ payroll.csv
+├ leaverequests.csv
+└ README.md
+
+Author / Contact
+Ghian Renzen Arboleda
+lr.grarboleda@mmdc.mcl.edu.ph
+
+Catherine Kate Plenos
+lr.ckplenos@mmdc.mcl.edu.ph
