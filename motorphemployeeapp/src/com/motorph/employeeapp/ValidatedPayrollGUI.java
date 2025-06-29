@@ -19,49 +19,132 @@ public class ValidatedPayrollGUI extends JPanel {
 
         model = new DefaultTableModel(new String[]{"Employee ID","Amount"}, 0);
         table = new JTable(model);
-        add(new JScrollPane(table), BorderLayout.CENTER);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.setRowHeight(28);
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        JScrollPane tableScroll = new JScrollPane(table);
+        tableScroll.setPreferredSize(new Dimension(350, 200));
+        JPanel tablePanel = new JPanel(new BorderLayout());
+        tablePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        tablePanel.add(tableScroll, BorderLayout.CENTER);
 
-        JPanel form = new JPanel(new GridLayout(3, 2, 5, 5));
+        // Form panel
+        JPanel form = new JPanel(new GridBagLayout());
+        form.setOpaque(false);
         form.setBorder(BorderFactory.createTitledBorder("Add / Edit Payroll"));
-        form.add(new JLabel("Employee ID:"));
-        empField = new JTextField();
-        form.add(empField);
-        form.add(new JLabel("Amount:"));
-        amtField = new JTextField();
-        form.add(amtField);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(8, 8, 8, 8);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        JButton addBtn    = new JButton("Add");
+        empField = new JTextField(16);
+        amtField = new JTextField(16);
+
+        String[] labels = {"Employee ID:", "Amount:"};
+        JTextField[] fields = {empField, amtField};
+        for (int i = 0; i < labels.length; i++) {
+            gbc.gridx = 0; gbc.gridy = i;
+            form.add(new JLabel(labels[i]), gbc);
+            gbc.gridx = 1;
+            form.add(fields[i], gbc);
+        }
+
+        // Buttons
+        JButton addBtn = new JButton("Save");
         JButton updateBtn = new JButton("Update");
-        JButton delBtn    = new JButton("Delete");
-        form.add(addBtn);
-        form.add(updateBtn);
-        form.add(delBtn);
-        add(form, BorderLayout.SOUTH);
+        JButton delBtn = new JButton("Delete Record");
 
+        addBtn.setBackground(new Color(153, 102, 255));
+        addBtn.setForeground(Color.WHITE);
+        updateBtn.setBackground(new Color(153, 102, 255));
+        updateBtn.setForeground(Color.WHITE);
+        delBtn.setBackground(new Color(255, 51, 51));
+        delBtn.setForeground(Color.WHITE);
+
+        Font btnFont = new Font("Segoe UI", Font.BOLD, 14);
+        addBtn.setFont(btnFont);
+        updateBtn.setFont(btnFont);
+        delBtn.setFont(btnFont);
+
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+        btnPanel.setOpaque(false);
+        btnPanel.add(updateBtn);
+        btnPanel.add(delBtn);
+        btnPanel.add(addBtn);
+
+        // Right panel (form + buttons)
+        JPanel rightPanel = new JPanel(new BorderLayout());
+        rightPanel.setOpaque(false);
+        rightPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        rightPanel.add(form, BorderLayout.CENTER);
+        rightPanel.add(btnPanel, BorderLayout.SOUTH);
+
+        // Main content panel
+        JPanel contentPanel = new JPanel(new GridLayout(1, 2, 20, 0));
+        contentPanel.setOpaque(false);
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 20, 20));
+        contentPanel.add(tablePanel);
+        contentPanel.add(rightPanel);
+
+        add(contentPanel, BorderLayout.CENTER);
+
+        // Load data
         loadPayroll();
 
+        // Add button logic
         addBtn.addActionListener(e -> {
             String id = empField.getText().trim();
-            String amt= amtField.getText().trim();
-            if (id.isEmpty()||amt.isEmpty()) {
+            String amt = amtField.getText().trim();
+            if (id.isEmpty() || amt.isEmpty()) {
                 JOptionPane.showMessageDialog(this,
-                    "Both fields required.","Validation Error",JOptionPane.WARNING_MESSAGE);
+                        "Both fields required.", "Validation Error", JOptionPane.WARNING_MESSAGE);
                 return;
             }
             try {
                 Double.parseDouble(amt);
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(this,
-                    "Amount must be numeric.","Validation Error",JOptionPane.WARNING_MESSAGE);
+                        "Amount must be numeric.", "Validation Error", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            appendCSV("payroll.csv", new String[]{id,amt});
-            loadPayroll();
-            empField.setText(""); amtField.setText("");
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow != -1) {
+                // Update existing record
+                model.setValueAt(id, selectedRow, 0);
+                model.setValueAt(amt, selectedRow, 1);
+                updateCSV();
+            } else {
+                appendCSV("payroll.csv", new String[]{id, amt});
+                loadPayroll();
+            }
+            empField.setText("");
+            amtField.setText("");
+            table.clearSelection();
         });
 
-        updateBtn.addActionListener(e -> openUpdate());
+        updateBtn.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(this, "Select a row to update.", "No selection", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            empField.setText(model.getValueAt(selectedRow, 0).toString());
+            amtField.setText(model.getValueAt(selectedRow, 1).toString());
+        });
+
         delBtn.addActionListener(e -> openDelete());
+
+        // Auto-populate fields when row is selected
+        table.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                int selectedRow = table.getSelectedRow();
+                if (selectedRow != -1) {
+                    empField.setText(model.getValueAt(selectedRow, 0).toString());
+                    amtField.setText(model.getValueAt(selectedRow, 1).toString());
+                }
+            }
+        });
     }
 
     private void loadPayroll() {
@@ -161,6 +244,30 @@ public class ValidatedPayrollGUI extends JPanel {
                     wOut.write(ln);
                     wOut.newLine();
                 }
+            }
+        } catch(IOException ex){ex.printStackTrace();}
+        in.delete();
+        out.renameTo(in);
+        loadPayroll();
+    }
+
+    private void updateCSV() {
+        File in  = new File("payroll.csv");
+        File out = new File("payroll_tmp.csv");
+        try (BufferedReader rIn = new BufferedReader(new FileReader(in));
+             BufferedWriter wOut= new BufferedWriter(new FileWriter(out))) {
+
+            String hdr = rIn.readLine();
+            wOut.write(hdr); wOut.newLine();
+            String ln;
+            while ((ln=rIn.readLine())!=null) {
+                String[] c = ln.split(",",-1);
+                if (c[0].equals(empField.getText().trim())) {
+                    wOut.write(empField.getText().trim() + "," + amtField.getText().trim());
+                } else {
+                    wOut.write(ln);
+                }
+                wOut.newLine();
             }
         } catch(IOException ex){ex.printStackTrace();}
         in.delete();

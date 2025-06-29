@@ -1,7 +1,6 @@
 package com.motorph.employeeapp;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * Main GUI launcher for the MotorPH Employee App,

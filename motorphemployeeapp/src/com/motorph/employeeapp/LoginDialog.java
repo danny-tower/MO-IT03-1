@@ -2,7 +2,6 @@ package com.motorph.employeeapp;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
 
 /**
  * A simple modal login dialog.

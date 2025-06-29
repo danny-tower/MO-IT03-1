@@ -4,7 +4,6 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.io.*;
-import java.util.Vector;
 
 /**
  * A panel that lets you view/create/update/delete employees
@@ -13,63 +12,152 @@ import java.util.Vector;
 public class ValidatedEmployeeGUI extends JPanel {
     private final DefaultTableModel tableModel;
     private final JTable table;
-    private final JTextField idField, nameField, positionField;
+    private final JTextField firstNameField, middleNameField, lastNameField, birthdayField;
 
     public ValidatedEmployeeGUI(Department dept) {
-        setLayout(new BorderLayout());
+        setLayout(new BorderLayout(20, 20));
+        setBackground(new Color(245, 245, 255));
 
-        tableModel = new DefaultTableModel(new String[]{"ID","Name","Position"}, 0);
-        table      = new JTable(tableModel);
-        add(new JScrollPane(table), BorderLayout.CENTER);
+        // Title
+        JLabel title = new JLabel("Employee Records", SwingConstants.CENTER);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        title.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+        add(title, BorderLayout.NORTH);
 
-        JPanel form = new JPanel(new GridLayout(4, 2, 5, 5));
+        // Table
+        tableModel = new DefaultTableModel(new String[]{"First name", "Middle name", "Last name", "Birthday"}, 0);
+        table = new JTable(tableModel);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.setRowHeight(28);
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        JScrollPane tableScroll = new JScrollPane(table);
+        tableScroll.setPreferredSize(new Dimension(400, 200));
+        JPanel tablePanel = new JPanel(new BorderLayout());
+        tablePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        tablePanel.add(tableScroll, BorderLayout.CENTER);
+
+        // Form panel
+        JPanel form = new JPanel(new GridBagLayout());
+        form.setOpaque(false);
         form.setBorder(BorderFactory.createTitledBorder("Add / Edit Employee"));
-        form.add(new JLabel("ID:"));
-        idField = new JTextField();
-        form.add(idField);
-        form.add(new JLabel("Name:"));
-        nameField = new JTextField();
-        form.add(nameField);
-        form.add(new JLabel("Position:"));
-        positionField = new JTextField();
-        form.add(positionField);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(8, 8, 8, 8);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        JButton addBtn    = new JButton("Add");
+        firstNameField = new JTextField(16);
+        middleNameField = new JTextField(16);
+        lastNameField = new JTextField(16);
+        birthdayField = new JTextField(16);
+
+        String[] labels = {"First name:", "Middle name:", "Last name:", "Birthday:"};
+        JTextField[] fields = {firstNameField, middleNameField, lastNameField, birthdayField};
+        for (int i = 0; i < labels.length; i++) {
+            gbc.gridx = 0; gbc.gridy = i;
+            form.add(new JLabel(labels[i]), gbc);
+            gbc.gridx = 1;
+            form.add(fields[i], gbc);
+        }
+
+        // Buttons
+        JButton addBtn = new JButton("Save");
         JButton updateBtn = new JButton("Update");
-        JButton delBtn    = new JButton("Delete");
-        form.add(addBtn);
-        form.add(updateBtn);
-        form.add(delBtn);
+        JButton delBtn = new JButton("Delete Record");
 
-        add(form, BorderLayout.SOUTH);
+        addBtn.setBackground(new Color(153, 102, 255));
+        addBtn.setForeground(Color.WHITE);
+        updateBtn.setBackground(new Color(153, 102, 255));
+        updateBtn.setForeground(Color.WHITE);
+        delBtn.setBackground(new Color(255, 51, 51));
+        delBtn.setForeground(Color.WHITE);
 
-        // load data
+        Font btnFont = new Font("Segoe UI", Font.BOLD, 14);
+        addBtn.setFont(btnFont);
+        updateBtn.setFont(btnFont);
+        delBtn.setFont(btnFont);
+
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+        btnPanel.setOpaque(false);
+        btnPanel.add(updateBtn);
+        btnPanel.add(delBtn);
+        btnPanel.add(addBtn);
+
+        // Right panel (form + buttons)
+        JPanel rightPanel = new JPanel(new BorderLayout());
+        rightPanel.setOpaque(false);
+        rightPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        rightPanel.add(form, BorderLayout.CENTER);
+        rightPanel.add(btnPanel, BorderLayout.SOUTH);
+
+        // Main content panel
+        JPanel contentPanel = new JPanel(new GridLayout(1, 2, 20, 0));
+        contentPanel.setOpaque(false);
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 20, 20));
+        contentPanel.add(tablePanel);
+        contentPanel.add(rightPanel);
+
+        add(contentPanel, BorderLayout.CENTER);
+
+        // Load data
         loadEmployees();
 
-        // wiring
+        // Add button logic
         addBtn.addActionListener(e -> {
-            String id = idField.getText().trim();
-            String nm = nameField.getText().trim();
-            String pos= positionField.getText().trim();
-            if (id.isEmpty()||nm.isEmpty()||pos.isEmpty()) {
+            String fn = firstNameField.getText().trim();
+            String mn = middleNameField.getText().trim();
+            String ln = lastNameField.getText().trim();
+            String bd = birthdayField.getText().trim();
+            if (fn.isEmpty() || ln.isEmpty() || bd.isEmpty()) {
                 JOptionPane.showMessageDialog(this,
-                    "All fields are required.",
-                    "Validation Error", JOptionPane.WARNING_MESSAGE);
+                        "First name, Last name, and Birthday are required.",
+                        "Validation Error", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            if (exists(id)) {
-                JOptionPane.showMessageDialog(this,
-                    "ID already exists.",
-                    "Duplicate ID", JOptionPane.WARNING_MESSAGE);
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow != -1) {
+                // Update existing record
+                tableModel.setValueAt(fn, selectedRow, 0);
+                tableModel.setValueAt(mn, selectedRow, 1);
+                tableModel.setValueAt(ln, selectedRow, 2);
+                tableModel.setValueAt(bd, selectedRow, 3);
+                updateCSV();
+            } else {
+                // Add new record
+                if (appendCSV("employees.csv", new String[]{fn, mn, ln, bd})) {
+                    loadEmployees();
+                }
+            }
+            clearFields();
+            table.clearSelection();
+        });
+
+        updateBtn.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(this, "Select a row to update.", "No selection", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            if (appendCSV("employees.csv", new String[]{id,nm,pos})) {
-                loadEmployees();
-                clearFields();
+            firstNameField.setText(tableModel.getValueAt(selectedRow, 0).toString());
+            middleNameField.setText(tableModel.getValueAt(selectedRow, 1).toString());
+            lastNameField.setText(tableModel.getValueAt(selectedRow, 2).toString());
+            birthdayField.setText(tableModel.getValueAt(selectedRow, 3).toString());
+        });
+
+        delBtn.addActionListener(e -> deleteSelected());
+
+        // Auto-populate fields when row is selected
+        table.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                int selectedRow = table.getSelectedRow();
+                if (selectedRow != -1) {
+                    firstNameField.setText(tableModel.getValueAt(selectedRow, 0).toString());
+                    middleNameField.setText(tableModel.getValueAt(selectedRow, 1).toString());
+                    lastNameField.setText(tableModel.getValueAt(selectedRow, 2).toString());
+                    birthdayField.setText(tableModel.getValueAt(selectedRow, 3).toString());
+                }
             }
         });
-        updateBtn.addActionListener(e -> openUpdateDialog());
-        delBtn.addActionListener(e -> deleteSelected());
     }
 
     private void loadEmployees() {
@@ -80,25 +168,18 @@ public class ValidatedEmployeeGUI extends JPanel {
             String hdr = br.readLine();
             String ln;
             while ((ln = br.readLine()) != null) {
-                tableModel.addRow(ln.split(",",-1));
+                tableModel.addRow(ln.split(",", -1));
             }
         } catch (IOException ex) {
             ex.printStackTrace();
         }
     }
 
-    private boolean exists(String id) {
-        for (int i=0;i<tableModel.getRowCount();i++)
-            if (tableModel.getValueAt(i,0).equals(id))
-                return true;
-        return false;
-    }
-
     private boolean appendCSV(String file, String[] row) {
         boolean newFile = !new File(file).exists();
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(file, true))) {
             if (newFile) {
-                bw.write("ID,Name,Position");
+                bw.write("First name,Middle name,Last name,Birthday");
                 bw.newLine();
             }
             bw.write(String.join(",", row));
@@ -111,86 +192,63 @@ public class ValidatedEmployeeGUI extends JPanel {
     }
 
     private void clearFields() {
-        idField.setText("");
-        nameField.setText("");
-        positionField.setText("");
+        firstNameField.setText("");
+        middleNameField.setText("");
+        lastNameField.setText("");
+        birthdayField.setText("");
     }
 
-    private void openUpdateDialog() {
-        int r = table.getSelectedRow();
-        if (r<0) {
-            JOptionPane.showMessageDialog(
-                this,"Select a row to update.","No selection",JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        String oldId = tableModel.getValueAt(r,0).toString();
-        String oldNm = tableModel.getValueAt(r,1).toString();
-        String oldPos= tableModel.getValueAt(r,2).toString();
-
-        JTextField nmF = new JTextField(oldNm);
-        JTextField posF= new JTextField(oldPos);
-        JPanel p = new JPanel(new GridLayout(2,2,5,5));
-        p.add(new JLabel("Name:")); p.add(nmF);
-        p.add(new JLabel("Position:")); p.add(posF);
-        int res = JOptionPane.showConfirmDialog(this,p,"Update Employee",JOptionPane.OK_CANCEL_OPTION);
-        if (res!=JOptionPane.OK_OPTION) return;
-
-        String newNm = nmF.getText().trim();
-        String newPos= posF.getText().trim();
-        if (newNm.isEmpty()||newPos.isEmpty()) {
-            JOptionPane.showMessageDialog(this,
-                "Fields required.","Validation Error",JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        // rewrite CSV
-        File in  = new File("employees.csv");
-        File out = new File("employees_tmp.csv");
-        try (BufferedReader rIn = new BufferedReader(new FileReader(in));
-             BufferedWriter wOut= new BufferedWriter(new FileWriter(out))) {
-            String hdr = rIn.readLine();
-            wOut.write(hdr); wOut.newLine();
-            String line;
-            while ((line=rIn.readLine())!=null) {
-                String[] c = line.split(",",-1);
-                if (c[0].equals(oldId)) {
-                    wOut.write(oldId + "," + newNm + "," + newPos);
-                } else {
-                    wOut.write(line);
-                }
-                wOut.newLine();
+    private void updateCSV() {
+        File file = new File("employees.csv");
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(file))) {
+            bw.write("First name,Middle name,Last name,Birthday");
+            bw.newLine();
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
+                String fn = tableModel.getValueAt(i, 0).toString();
+                String mn = tableModel.getValueAt(i, 1).toString();
+                String ln = tableModel.getValueAt(i, 2).toString();
+                String bd = tableModel.getValueAt(i, 3).toString();
+                bw.write(String.join(",", fn, mn, ln, bd));
+                bw.newLine();
             }
-        } catch(IOException ex){ex.printStackTrace();}
-        in.delete();
-        out.renameTo(in);
-        loadEmployees();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
     }
 
     private void deleteSelected() {
         int r = table.getSelectedRow();
-        if (r<0) {
+        if (r < 0) {
             JOptionPane.showMessageDialog(
-                this,"Select a row to delete.","No selection",JOptionPane.WARNING_MESSAGE);
+                    this, "Select a row to delete.", "No selection", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        String id = tableModel.getValueAt(r,0).toString();
+        String fn = tableModel.getValueAt(r, 0).toString();
+        String ln = tableModel.getValueAt(r, 2).toString();
+        String bd = tableModel.getValueAt(r, 3).toString();
         int c = JOptionPane.showConfirmDialog(
-            this,"Delete employee "+id+"?","Confirm",JOptionPane.YES_NO_OPTION);
-        if (c!=JOptionPane.YES_OPTION) return;
+                this, "Delete employee " + fn + " " + ln + "?",
+                "Confirm", JOptionPane.YES_NO_OPTION);
+        if (c != JOptionPane.YES_OPTION) return;
 
-        File in  = new File("employees.csv");
+        File in = new File("employees.csv");
         File out = new File("employees_tmp.csv");
         try (BufferedReader rIn = new BufferedReader(new FileReader(in));
-             BufferedWriter wOut= new BufferedWriter(new FileWriter(out))) {
+             BufferedWriter wOut = new BufferedWriter(new FileWriter(out))) {
             String hdr = rIn.readLine();
-            wOut.write(hdr); wOut.newLine();
+            wOut.write(hdr);
+            wOut.newLine();
             String line;
-            while ((line=rIn.readLine())!=null) {
-                if (!line.startsWith(id + ",")) {
+            while ((line = rIn.readLine()) != null) {
+                String[] cArr = line.split(",", -1);
+                if (!(cArr[0].equals(fn) && cArr[2].equals(ln) && cArr[3].equals(bd))) {
                     wOut.write(line);
                     wOut.newLine();
                 }
             }
-        } catch(IOException ex){ex.printStackTrace();}
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
         in.delete();
         out.renameTo(in);
         loadEmployees();
