@@ -1,38 +1,81 @@
-package com.motorph.employeeapp;
+package com.scoopmeinnn.employeeapp.model;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalDate;
+import java.util.Objects;
 
+/**
+ * Represents an employee in the application.
+ */
 public class Employee {
-    private String employeeID;
-    private String name;
-    private String position;
-    private Department dept;
-    private List<Payroll> payrollHistory = new ArrayList<>();
-    private List<LeaveRequest> leaveRequests = new ArrayList<>();
+    private final String id;
+    private String firstName;
+    private String lastName;
+    private LocalDate birthDate;
 
-    public Employee(String employeeID, String name, String position, Department dept) {
-        this.employeeID = employeeID;
-        this.name = name;
-        this.position = position;
-        this.dept = dept;
-        dept.addEmployee(this);
+    /**
+     * Constructs a new Employee instance.
+     *
+     * @param id         unique identifier (non-null)
+     * @param firstName  first name (non-empty)
+     * @param lastName   last name (non-empty)
+     * @param birthDate  birth date (non-null)
+     */
+    public Employee(String id, String firstName, String lastName, LocalDate birthDate) {
+        this.id = Objects.requireNonNull(id, "ID must not be null");
+        setFirstName(firstName);
+        setLastName(lastName);
+        this.birthDate = Objects.requireNonNull(birthDate, "Birth date must not be null");
     }
 
-    public String getEmployeeID() { return employeeID; }
-    public String getName() { return name; }
-    public String getPosition() { return position; }
-    public Department getDept() { return dept; }
-    public List<Payroll> getPayrollHistory() { return payrollHistory; }
-    public List<LeaveRequest> getLeaveRequests() { return leaveRequests; }
-
-    public void setPosition(String position) { this.position = position; }
-    public void setDept(Department dept) {
-        if (this.dept != null) this.dept.removeEmployee(this);
-        this.dept = dept;
-        dept.addEmployee(this);
+    public String getId() {
+        return id;
     }
 
-    public void addPayroll(Payroll p) { payrollHistory.add(p); }
-    public void submitLeaveRequest(LeaveRequest lr) { leaveRequests.add(lr); }
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        if (firstName == null || firstName.isBlank()) {
+            throw new IllegalArgumentException("First name cannot be empty");
+        }
+        this.firstName = firstName.trim();
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        if (lastName == null || lastName.isBlank()) {
+            throw new IllegalArgumentException("Last name cannot be empty");
+        }
+        this.lastName = lastName.trim();
+    }
+
+    public LocalDate getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(LocalDate birthDate) {
+        this.birthDate = Objects.requireNonNull(birthDate, "Birth date must not be null");
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Employee[id=%s, firstName=%s, lastName=%s, birthDate=%s]", id, firstName, lastName, birthDate);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Employee)) return false;
+        Employee other = (Employee) o;
+        return id.equals(other.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }
