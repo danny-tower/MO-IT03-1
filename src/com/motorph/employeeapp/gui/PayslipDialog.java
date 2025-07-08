@@ -9,153 +9,219 @@ import java.awt.event.ActionEvent;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.stream.IntStream;
+import java.time.format.DateTimeFormatter;
 
-/**
- * Dialog to generate a payslip for a given employee between two dates.
- */
 public class PayslipDialog extends JDialog {
+
     private final Employee employee;
 
-    private final JComboBox<Integer> dayStartBox   = new JComboBox<>();
-    private final JComboBox<Integer> monthStartBox = new JComboBox<>();
-    private final JComboBox<Integer> yearStartBox  = new JComboBox<>();
-    private final JComboBox<Integer> dayEndBox     = new JComboBox<>();
-    private final JComboBox<Integer> monthEndBox   = new JComboBox<>();
-    private final JComboBox<Integer> yearEndBox    = new JComboBox<>();
+    // Tab 1 fields
+    private final JTextField empIdField = new JTextField();
+    private final JTextField lastNameField = new JTextField();
+    private final JTextField firstNameField = new JTextField();
+    private final JTextField bdayField = new JTextField();
+    private final JTextField addressField = new JTextField();
+    private final JTextField phoneField = new JTextField();
+    private final JTextField sssField = new JTextField();
+    private final JTextField philHealthField = new JTextField();
+    private final JTextField tinField = new JTextField();
+    private final JTextField pagIbigField = new JTextField();
 
-    private final JPanel earningsPanel   = new JPanel(new GridLayout(0,1,4,4));
-    private final JPanel deductionsPanel= new JPanel(new GridLayout(0,1,4,4));
+    // Tab 2 fields
+    private final JComboBox<Integer> y1cb = new JComboBox<>();
+    private final JComboBox<Integer> m1cb = new JComboBox<>();
+    private final JComboBox<Integer> d1cb = new JComboBox<>();
+    private final JComboBox<Integer> y2cb = new JComboBox<>();
+    private final JComboBox<Integer> m2cb = new JComboBox<>();
+    private final JComboBox<Integer> d2cb = new JComboBox<>();
+
+    private final JTextField salaryPeriodField = new JTextField();
+    private final JTextField salaryEarnedField = new JTextField();
+    private final JTextField riceField = new JTextField();
+    private final JTextField phoneAllowField = new JTextField();
+    private final JTextField clothingAllowField = new JTextField();
+    private final JTextField grossField = new JTextField();
+    private final JTextField sssDedField = new JTextField();
+    private final JTextField philHealthDedField = new JTextField();
+    private final JTextField pagIbigDedField = new JTextField();
+    private final JTextField taxDedField = new JTextField();
+    private final JTextField totalDedField = new JTextField();
+    private final JTextField netField = new JTextField();
 
     public PayslipDialog(Frame owner, Employee employee) {
-        super(owner, "Generate Payslip", true);
+        super(owner, "Payslip", true);
         this.employee = employee;
-
-        initSelectors();
-        initLayout();
-
-        pack();
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        setSize(600, 500);
         setLocationRelativeTo(owner);
-    }
 
-    private void initSelectors() {
-        int currentYear = YearMonth.now().getYear();
-        IntStream.rangeClosed(1, 31).forEach(dayStartBox::addItem);
-        IntStream.rangeClosed(1, 12).forEach(monthStartBox::addItem);
-        IntStream.rangeClosed(currentYear - 5, currentYear + 1).forEach(yearStartBox::addItem);
+        JTabbedPane tabs = new JTabbedPane();
 
-        IntStream.rangeClosed(1, 31).forEach(dayEndBox::addItem);
-        IntStream.rangeClosed(1, 12).forEach(monthEndBox::addItem);
-        IntStream.rangeClosed(currentYear - 5, currentYear + 1).forEach(yearEndBox::addItem);
-
-        LocalDate today = LocalDate.now();
-        dayStartBox.setSelectedItem(today.getDayOfMonth());
-        monthStartBox.setSelectedItem(today.getMonthValue());
-        yearStartBox.setSelectedItem(today.getYear());
-        dayEndBox.setSelectedItem(today.getDayOfMonth());
-        monthEndBox.setSelectedItem(today.getMonthValue());
-        yearEndBox.setSelectedItem(today.getYear());
-    }
-
-    private void initLayout() {
-        JPanel selectorPanel = new JPanel(new GridBagLayout());
+        // --- Tab 1: Employee Details ---
+        JPanel detailsPanel = new JPanel(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(4,4,4,4);
-
-        // Start date
+        c.insets = new Insets(4, 8, 4, 8);
         c.gridx = 0; c.gridy = 0;
-        selectorPanel.add(new JLabel("Start Date:"), c);
-        c.gridx = 1; selectorPanel.add(monthStartBox, c);
-        c.gridx = 2; selectorPanel.add(dayStartBox, c);
-        c.gridx = 3; selectorPanel.add(yearStartBox, c);
+        c.anchor = GridBagConstraints.LINE_END;
 
-        // End date
-        c.gridx = 0; c.gridy = 1;
-        selectorPanel.add(new JLabel("End Date:"), c);
-        c.gridx = 1; selectorPanel.add(monthEndBox, c);
-        c.gridx = 2; selectorPanel.add(dayEndBox, c);
-        c.gridx = 3; selectorPanel.add(yearEndBox, c);
+        addDetailField(detailsPanel, c, "Employee No.:", empIdField);
+        addDetailField(detailsPanel, c, "Last Name:", lastNameField);
+        addDetailField(detailsPanel, c, "First Name:", firstNameField);
+        addDetailField(detailsPanel, c, "Birthday:", bdayField);
+        addDetailField(detailsPanel, c, "Address:", addressField);
+        addDetailField(detailsPanel, c, "Phone:", phoneField);
+        addDetailField(detailsPanel, c, "SSS #:", sssField);
+        addDetailField(detailsPanel, c, "PhilHealth #:", philHealthField);
+        addDetailField(detailsPanel, c, "TIN #:", tinField);
+        addDetailField(detailsPanel, c, "Pag-IBIG #:", pagIbigField);
 
+        setEmployeeDetails();
+
+        tabs.addTab("Employee Details", detailsPanel);
+
+        // --- Tab 2: Payslip ---
+        JPanel payslipPanel = new JPanel(new GridBagLayout());
+        c.gridx = 0; c.gridy = 0;
+
+        // Salary Period selectors
+        payslipPanel.add(new JLabel("Start Date:"), c); c.gridx++;
+        payslipPanel.add(y1cb, c); c.gridx++;
+        payslipPanel.add(m1cb, c); c.gridx++;
+        payslipPanel.add(d1cb, c);
+        c.gridy++; c.gridx = 0;
+
+        payslipPanel.add(new JLabel("End Date:"), c); c.gridx++;
+        payslipPanel.add(y2cb, c); c.gridx++;
+        payslipPanel.add(m2cb, c); c.gridx++;
+        payslipPanel.add(d2cb, c);
+        c.gridy++; c.gridx = 0;
+
+        // Button
         JButton showBtn = new JButton("Show Payslip");
         showBtn.addActionListener(this::onShowPayslip);
+        payslipPanel.add(showBtn, c); c.gridy++;
 
-        JPanel top = new JPanel(new BorderLayout(8,8));
-        top.add(selectorPanel, BorderLayout.CENTER);
-        top.add(showBtn, BorderLayout.EAST);
+        // Salary info fields
+        addPayslipField(payslipPanel, c, "Salary Period:", salaryPeriodField);
+        addPayslipField(payslipPanel, c, "Salary Earned:", salaryEarnedField);
+        addPayslipField(payslipPanel, c, "Rice Allowance:", riceField);
+        addPayslipField(payslipPanel, c, "Phone Allowance:", phoneAllowField);
+        addPayslipField(payslipPanel, c, "Clothing Allowance:", clothingAllowField);
+        addPayslipField(payslipPanel, c, "Gross:", grossField);
+        addPayslipField(payslipPanel, c, "SSS:", sssDedField);
+        addPayslipField(payslipPanel, c, "PhilHealth:", philHealthDedField);
+        addPayslipField(payslipPanel, c, "Pag-IBIG:", pagIbigDedField);
+        addPayslipField(payslipPanel, c, "Withholding Tax:", taxDedField);
+        addPayslipField(payslipPanel, c, "Total Deductions:", totalDedField);
+        addPayslipField(payslipPanel, c, "Net Salary:", netField);
 
-        JPanel output = new JPanel(new GridLayout(1,2,10,0));
-        output.add(wrapPanel("Earnings", earningsPanel));
-        output.add(wrapPanel("Deductions", deductionsPanel));
+        // Close button
+        JButton closeBtn = new JButton("Close");
+        closeBtn.addActionListener(_ -> dispose());
+        c.gridx = 1; c.gridy++;
+        payslipPanel.add(closeBtn, c);
 
-        getContentPane().setLayout(new BorderLayout(10,10));
-        getContentPane().add(top, BorderLayout.NORTH);
-        getContentPane().add(output, BorderLayout.CENTER);
+        tabs.addTab("Payslip", payslipPanel);
+
+        // Fill date selectors
+        initDateSelectors();
+
+        setContentPane(tabs);
     }
 
-    private JPanel wrapPanel(String title, JPanel content) {
-        JPanel p = new JPanel(new BorderLayout());
-        p.setBorder(BorderFactory.createTitledBorder(title));
-        p.add(content, BorderLayout.CENTER);
-        return p;
+    private void setEmployeeDetails() {
+        empIdField.setText(employee.getId());
+        lastNameField.setText(employee.getLastName());
+        firstNameField.setText(employee.getFirstName());
+        bdayField.setText(employee.getBirthDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy")));
+        addressField.setText(employee.getAddress());
+        phoneField.setText(employee.getPhone());
+        sssField.setText(employee.getSssNumber());
+        philHealthField.setText(employee.getPhilHealthNumber());
+        tinField.setText(employee.getTinNumber());
+        pagIbigField.setText(employee.getPagIbigNumber());
+        for (JTextField f : new JTextField[]{empIdField, lastNameField, firstNameField, bdayField, addressField, phoneField, sssField, philHealthField, tinField, pagIbigField}) {
+            f.setEditable(false);
+        }
+    }
+
+    private void initDateSelectors() {
+        int thisYear = LocalDate.now().getYear();
+        for (int y = thisYear - 1; y <= thisYear + 1; y++) {
+            y1cb.addItem(y);
+            y2cb.addItem(y);
+        }
+        for (int m = 1; m <= 12; m++) {
+            m1cb.addItem(m);
+            m2cb.addItem(m);
+        }
+        for (int d = 1; d <= 31; d++) {
+            d1cb.addItem(d);
+            d2cb.addItem(d);
+        }
+        y1cb.setSelectedItem(thisYear);
+        m1cb.setSelectedItem(LocalDate.now().getMonthValue());
+        d1cb.setSelectedItem(1);
+        y2cb.setSelectedItem(thisYear);
+        m2cb.setSelectedItem(LocalDate.now().getMonthValue());
+        d2cb.setSelectedItem(LocalDate.now().getDayOfMonth());
+    }
+
+    private void addDetailField(JPanel panel, GridBagConstraints c, String label, JTextField field) {
+        c.gridx = 0; panel.add(new JLabel(label), c);
+        c.gridx = 1; panel.add(field, c);
+        c.gridy++;
+    }
+
+    private void addPayslipField(JPanel panel, GridBagConstraints c, String label, JTextField field) {
+        c.gridx = 0; panel.add(new JLabel(label), c);
+        c.gridx = 1; panel.add(field, c);
+        field.setEditable(false);
+        c.gridy++;
     }
 
     private void onShowPayslip(ActionEvent ev) {
-        LocalDate start = LocalDate.of(
-            (Integer)yearStartBox.getSelectedItem(),
-            (Integer)monthStartBox.getSelectedItem(),
-            (Integer)dayStartBox.getSelectedItem()
-        );
-        LocalDate end = LocalDate.of(
-            (Integer)yearEndBox.getSelectedItem(),
-            (Integer)monthEndBox.getSelectedItem(),
-            (Integer)dayEndBox.getSelectedItem()
-        );
+        try {
+            LocalDate start = LocalDate.of((int)y1cb.getSelectedItem(), (int)m1cb.getSelectedItem(), (int)d1cb.getSelectedItem());
+            LocalDate end   = LocalDate.of((int)y2cb.getSelectedItem(), (int)m2cb.getSelectedItem(), (int)d2cb.getSelectedItem());
 
-        if (end.isBefore(start)) {
-            JOptionPane.showMessageDialog(
-                this, "Select a valid date range.",
-                "Error", JOptionPane.ERROR_MESSAGE
-            );
-            return;
+            if (end.isBefore(start)) {
+                JOptionPane.showMessageDialog(this, "End date must be after start date.", "Invalid Range", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            YearMonth ym = YearMonth.of(end.getYear(), end.getMonthValue());
+
+            // Calculations
+            BigDecimal grossMonthly = employee.getGrossSemiMonthlyRate().multiply(BigDecimal.valueOf(2));
+            BigDecimal earnings = SalaryCalculator.computeMonthlyPay(employee, ym);
+            BigDecimal rice = employee.getRiceSubsidy();
+            BigDecimal phone = employee.getPhoneAllowance();
+            BigDecimal clothing = employee.getClothingAllowance();
+            BigDecimal sssDed = SalaryCalculator.computeSssDeduction(grossMonthly);
+            BigDecimal philDed = SalaryCalculator.computePhilHealthDeduction(grossMonthly);
+            BigDecimal pagIbigDed = SalaryCalculator.computePagIbigDeduction(grossMonthly);
+            BigDecimal taxDed = SalaryCalculator.computeWithholdingTax(earnings, sssDed, philDed, pagIbigDed);
+
+            BigDecimal totalDed = sssDed.add(philDed).add(pagIbigDed).add(taxDed);
+            BigDecimal netSalary = earnings.subtract(totalDed);
+
+            // Set fields
+            salaryPeriodField.setText(start + " - " + end);
+            salaryEarnedField.setText(earnings.toPlainString());
+            riceField.setText(rice.toPlainString());
+            phoneAllowField.setText(phone.toPlainString());
+            clothingAllowField.setText(clothing.toPlainString());
+            grossField.setText(grossMonthly.toPlainString());
+            sssDedField.setText(sssDed.toPlainString());
+            philHealthDedField.setText(philDed.toPlainString());
+            pagIbigDedField.setText(pagIbigDed.toPlainString());
+            taxDedField.setText(taxDed.toPlainString());
+            totalDedField.setText(totalDed.toPlainString());
+            netField.setText(netSalary.toPlainString());
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Invalid date selection.", "Input Error", JOptionPane.ERROR_MESSAGE);
         }
-
-        YearMonth ym = YearMonth.of(start.getYear(), start.getMonthValue());
-        BigDecimal grossMonthly    = employee.getGrossSemiMonthlyRate().multiply(BigDecimal.valueOf(2));
-        BigDecimal totalEarnings   = SalaryCalculator.computeMonthlyPay(employee, ym);
-
-        BigDecimal sssDeduction       = SalaryCalculator.computeSssDeduction(grossMonthly);
-        BigDecimal philHealthDeduction= SalaryCalculator.computePhilHealthDeduction(grossMonthly);
-        BigDecimal pagIbigDeduction   = SalaryCalculator.computePagIbigDeduction(grossMonthly);
-        BigDecimal taxDeduction       = SalaryCalculator.computeWithholdingTax(
-                                          totalEarnings,
-                                          sssDeduction,
-                                          philHealthDeduction,
-                                          pagIbigDeduction
-                                      );
-
-        // Earnings
-        earningsPanel.removeAll();
-        earningsPanel.add(new JLabel("Gross Salary: " + grossMonthly));
-        earningsPanel.add(new JLabel("Rice Subsidy: " + employee.getRiceSubsidy()));
-        earningsPanel.add(new JLabel("Phone Allowance: " + employee.getPhoneAllowance()));
-        earningsPanel.add(new JLabel("Clothing Allowance: " + employee.getClothingAllowance()));
-        earningsPanel.add(new JLabel("Total Earnings: " + totalEarnings));
-
-        // Deductions
-        BigDecimal totalDeductions = sssDeduction
-            .add(philHealthDeduction)
-            .add(pagIbigDeduction)
-            .add(taxDeduction);
-
-        deductionsPanel.removeAll();
-        deductionsPanel.add(new JLabel("SSS: " + sssDeduction));
-        deductionsPanel.add(new JLabel("PhilHealth: " + philHealthDeduction));
-        deductionsPanel.add(new JLabel("Pag-IBIG: " + pagIbigDeduction));
-        deductionsPanel.add(new JLabel("Withholding Tax: " + taxDeduction));
-        deductionsPanel.add(new JLabel("Total Deductions: " + totalDeductions));
-        deductionsPanel.add(new JLabel("Net Salary: " + totalEarnings.subtract(totalDeductions)));
-
-        revalidate();
-        repaint();
     }
 }

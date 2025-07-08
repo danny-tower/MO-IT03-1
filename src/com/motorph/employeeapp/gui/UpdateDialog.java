@@ -2,25 +2,26 @@ package com.motorph.employeeapp.gui;
 
 import com.motorph.employeeapp.model.Employee;
 import com.motorph.employeeapp.repository.EmployeeRepository;
+import com.toedter.calendar.JDateChooser;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.math.BigDecimal;
-
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.List;
 
 public class UpdateDialog extends JDialog {
     private final EmployeeRepository repo;
     private final Employee employee;
+    private final Runnable onUpdate;
 
     private final JTextField idField             = new JTextField(10);
     private final JTextField lastNameField       = new JTextField(15);
     private final JTextField firstNameField      = new JTextField(15);
-    private final JTextField birthdayField       = new JTextField(12);
-    private final JTextField addressField        = new JTextField(20);
+    private final JDateChooser birthdayChooser   = new JDateChooser();
+    private final JTextField addressField        = new JTextField(15);
     private final JTextField phoneField          = new JTextField(12);
     private final JTextField sssField            = new JTextField(12);
     private final JTextField philHealthField     = new JTextField(12);
@@ -36,10 +37,11 @@ public class UpdateDialog extends JDialog {
     private final JTextField semiMonthlyRateField   = new JTextField(10);
     private final JTextField hourlyRateField        = new JTextField(10);
 
-    public UpdateDialog(Frame owner, EmployeeRepository repo, Employee employee) {
+    public UpdateDialog(Frame owner, EmployeeRepository repo, Employee employee, Runnable onUpdate) {
         super(owner, "Employee Details", true);
         this.repo = repo;
         this.employee = employee;
+        this.onUpdate = onUpdate;
 
         buildForm();
         loadEmployee();
@@ -61,8 +63,8 @@ public class UpdateDialog extends JDialog {
             "Basic Salary:", "Rice Subsidy:", "Phone Allowance:",
             "Clothing Allowance:", "Semi-monthly Rate:", "Hourly Rate:"
         };
-        JTextField[] fields = {
-            idField, lastNameField, firstNameField, birthdayField,
+        JComponent[] fields = {
+            idField, lastNameField, firstNameField, birthdayChooser,
             addressField, phoneField, sssField, philHealthField,
             tinField, pagIbigField, statusField, positionField,
             supervisorField, basicSalaryField, riceSubsidyField,
@@ -82,21 +84,20 @@ public class UpdateDialog extends JDialog {
         JButton updateBtn = new JButton("Update");
         JButton closeBtn  = new JButton("Close");
         updateBtn.addActionListener(this::onUpdate);
-       closeBtn.addActionListener(_ -> dispose());
+        closeBtn.addActionListener(_ -> dispose());
         buttons.add(updateBtn);
         buttons.add(closeBtn);
 
         getContentPane().setLayout(new BorderLayout());
-        getContentPane().add(new JScrollPane(form), BorderLayout.CENTER);
+        getContentPane().add(form, BorderLayout.CENTER);
         getContentPane().add(buttons, BorderLayout.SOUTH);
     }
 
     private void loadEmployee() {
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMMM d, yyyy");
         idField.setText(employee.getId());
         lastNameField.setText(employee.getLastName());
         firstNameField.setText(employee.getFirstName());
-        birthdayField.setText(employee.getBirthDate().format(fmt));
+        birthdayChooser.setDate(java.sql.Date.valueOf(employee.getBirthDate()));
         addressField.setText(employee.getAddress());
         phoneField.setText(employee.getPhone());
         sssField.setText(employee.getSssNumber());
@@ -116,25 +117,36 @@ public class UpdateDialog extends JDialog {
 
     private void onUpdate(ActionEvent ev) {
         try {
-            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMMM d, yyyy");
-            employee.setLastName(lastNameField.getText());
-            employee.setFirstName(firstNameField.getText());
-            employee.setBirthDate(LocalDate.parse(birthdayField.getText(), fmt));
-            employee.setAddress(addressField.getText());
-            employee.setPhone(phoneField.getText());
-            employee.setSssNumber(sssField.getText());
-            employee.setPhilHealthNumber(philHealthField.getText());
-            employee.setTinNumber(tinField.getText());
-            employee.setPagIbigNumber(pagIbigField.getText());
-            employee.setStatus(statusField.getText());
-            employee.setPosition(positionField.getText());
-            employee.setSupervisor(supervisorField.getText());
-            employee.setBasicSalary(new BigDecimal(basicSalaryField.getText()));
-            employee.setRiceSubsidy(new BigDecimal(riceSubsidyField.getText()));
-            employee.setPhoneAllowance(new BigDecimal(phoneAllowanceField.getText()));
-            employee.setClothingAllowance(new BigDecimal(clothingAllowanceField.getText()));
-            employee.setGrossSemiMonthlyRate(new BigDecimal(semiMonthlyRateField.getText()));
-            employee.setHourlyRate(new BigDecimal(hourlyRateField.getText()));
+            if (lastNameField.getText().trim().isEmpty() ||
+                firstNameField.getText().trim().isEmpty() ||
+                birthdayChooser.getDate() == null ||
+                sssField.getText().trim().isEmpty()) {
+                throw new IllegalArgumentException("Please fill in all required fields (Last Name, First Name, Birthday, SSS #).");
+            }
+
+            LocalDate bday = birthdayChooser.getDate()
+                .toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+
+            employee.setLastName(lastNameField.getText().trim());
+            employee.setFirstName(firstNameField.getText().trim());
+            employee.setBirthDate(bday);
+            employee.setAddress(addressField.getText().trim());
+            employee.setPhone(phoneField.getText().trim());
+            employee.setSssNumber(sssField.getText().trim());
+            employee.setPhilHealthNumber(philHealthField.getText().trim());
+            employee.setTinNumber(tinField.getText().trim());
+            employee.setPagIbigNumber(pagIbigField.getText().trim());
+            employee.setStatus(statusField.getText().trim());
+            employee.setPosition(positionField.getText().trim());
+            employee.setSupervisor(supervisorField.getText().trim());
+            employee.setBasicSalary(parseBigDecimal(basicSalaryField.getText().trim()));
+            employee.setRiceSubsidy(parseBigDecimal(riceSubsidyField.getText().trim()));
+            employee.setPhoneAllowance(parseBigDecimal(phoneAllowanceField.getText().trim()));
+            employee.setClothingAllowance(parseBigDecimal(clothingAllowanceField.getText().trim()));
+            employee.setGrossSemiMonthlyRate(parseBigDecimal(semiMonthlyRateField.getText().trim()));
+            employee.setHourlyRate(parseBigDecimal(hourlyRateField.getText().trim()));
 
             List<Employee> all = repo.loadAll();
             for (int i = 0; i < all.size(); i++) {
@@ -144,14 +156,19 @@ public class UpdateDialog extends JDialog {
                 }
             }
             repo.saveAll(all);
-
             JOptionPane.showMessageDialog(this, "Record Updated!");
             dispose();
+            if (onUpdate != null) onUpdate.run();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this,
                 "Invalid input: " + ex.getMessage(),
                 "Error", JOptionPane.ERROR_MESSAGE
             );
         }
+    }
+
+    private BigDecimal parseBigDecimal(String val) {
+        if (val.isEmpty()) return BigDecimal.ZERO;
+        return new BigDecimal(val);
     }
 }

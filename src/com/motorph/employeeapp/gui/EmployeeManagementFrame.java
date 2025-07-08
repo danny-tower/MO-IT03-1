@@ -3,191 +3,166 @@ package com.motorph.employeeapp.gui;
 import com.motorph.employeeapp.model.Employee;
 import com.motorph.employeeapp.repository.CsvEmployeeRepository;
 import com.motorph.employeeapp.repository.EmployeeRepository;
+import com.toedter.calendar.JDateChooser;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
+import java.util.Date;
+import java.io.IOException;
 
-/**
- * Swing-based GUI for managing employees and computing salary.
- */
 public class EmployeeManagementFrame extends JFrame {
-    private final EmployeeRepository repo;
-    private final DefaultTableModel tableModel;
-    private final JTable table;
+    private EmployeeRepository repo;
 
-    public EmployeeManagementFrame(String csvPath) {
+    // Table and model
+    private JTable table;
+    private DefaultTableModel tableModel;
+
+    public EmployeeManagementFrame(EmployeeRepository repo) {
         super("Employee Management");
-        this.repo = new CsvEmployeeRepository(csvPath);
+        this.repo = repo;
 
-        // Table setup
-        this.tableModel = new DefaultTableModel(
-            new String[]{
-                "Employee #", "Last Name", "First Name",
-                "SSS #", "PhilHealth #", "TIN #", "Pag-IBIG #"
-            },
-            0
-        );
-        this.table = new JTable(tableModel);
+        initTable();
+        initLayout();
 
-        setLayout(new BorderLayout());
-        add(new JScrollPane(table), BorderLayout.CENTER);
-
-        // Buttons
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        JButton viewBtn    = new JButton("View and Update Record");
-        JButton addBtn     = new JButton("Add Record");
-        JButton deleteBtn  = new JButton("Delete Record");
-        JButton payslipBtn = new JButton("Generate Payslip");
-        JButton exitBtn    = new JButton("Exit");
-
-        buttons.add(viewBtn);
-        buttons.add(addBtn);
-        buttons.add(deleteBtn);
-        buttons.add(payslipBtn);
-        buttons.add(exitBtn);
-        add(buttons, BorderLayout.SOUTH);
-
-        // Load data
-        loadEmployees();
-
-        // Hook up actions
-        viewBtn.addActionListener(this::onView);
-        addBtn.addActionListener(this::onAdd);
-        deleteBtn.addActionListener(this::onDelete);
-        payslipBtn.addActionListener(this::onGeneratePayslip);
-        exitBtn.addActionListener(_ -> System.exit(0));
-
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(900, 600);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(900, 550);
         setLocationRelativeTo(null);
     }
 
-    private void loadEmployees() {
+    private void initTable() {
+        String[] columns = {
+            "Employee #", "Last Name", "First Name", "SSS #", "Philhealth #", "TIN #", "Pag-ibig #"
+        };
+        tableModel = new DefaultTableModel(columns, 0) {
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
+        loadTableData();
+
+        table = new JTable(tableModel);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    }
+
+    private void loadTableData() {
         tableModel.setRowCount(0);
         try {
             List<Employee> all = repo.loadAll();
-            System.out.println("Loaded " + all.size() + " employees from CSV.");
-            for (Employee e : all) {
+            for (Employee emp : all) {
                 tableModel.addRow(new Object[]{
-                    e.getId(),
-                    e.getLastName(),
-                    e.getFirstName(),
-                    e.getSssNumber(),
-                    e.getPhilHealthNumber(),
-                    e.getTinNumber(),
-                    e.getPagIbigNumber()
+                    emp.getId(),
+                    emp.getLastName(),
+                    emp.getFirstName(),
+                    emp.getSssNumber(),
+                    emp.getPhilHealthNumber(),
+                    emp.getTinNumber(),
+                    emp.getPagIbigNumber()
                 });
             }
-        } catch (IOException ex) {
-            JOptionPane.showMessageDialog(
-                this,
-                "Failed to load: " + ex.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE
-            );
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, "Failed to load employees: " + e.getMessage());
         }
     }
 
-    private Employee selectedEmployee() {
+    private void initLayout() {
+        setLayout(new BorderLayout());
+
+        // Table with scroll
+        JScrollPane tableScroll = new JScrollPane(table);
+
+        // Button panel on the left
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
+        buttonPanel.setPreferredSize(new Dimension(240, 0));
+
+        JButton viewBtn = new JButton("View and Update Record");
+        JButton addBtn = new JButton("Add Record");
+        JButton deleteBtn = new JButton("Delete Record");
+        JButton payslipBtn = new JButton("Generate Payslip");
+        JButton exitBtn = new JButton("Exit");
+
+        buttonPanel.add(Box.createVerticalStrut(20));
+        buttonPanel.add(viewBtn);
+        buttonPanel.add(Box.createVerticalStrut(20));
+        buttonPanel.add(addBtn);
+        buttonPanel.add(Box.createVerticalStrut(20));
+        buttonPanel.add(deleteBtn);
+        buttonPanel.add(Box.createVerticalStrut(20));
+        buttonPanel.add(payslipBtn);
+        buttonPanel.add(Box.createVerticalStrut(20));
+        buttonPanel.add(exitBtn);
+
+        // Action Listeners
+        viewBtn.addActionListener(_ -> onViewUpdate());
+        addBtn.addActionListener(_-> onAdd());
+        deleteBtn.addActionListener(_ -> onDelete());
+        payslipBtn.addActionListener(_ -> onPayslip());
+        exitBtn.addActionListener(_ -> System.exit(0));
+
+        add(buttonPanel, BorderLayout.WEST);
+        add(tableScroll, BorderLayout.CENTER);
+    }
+
+    private void onViewUpdate() {
         int row = table.getSelectedRow();
-        if (row < 0) return null;
-        String id = tableModel.getValueAt(row, 0).toString();
-        return findById(id);
-    }
-
-    private void onView(ActionEvent ev) {
-        Employee e = selectedEmployee();
-        if (e == null) {
-            JOptionPane.showMessageDialog(
-                this, "Please select an employee first.",
-                "Warning", JOptionPane.WARNING_MESSAGE
-            );
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Select a record first.");
             return;
         }
-        new UpdateDialog(this, repo, e).setVisible(true);
-        loadEmployees();
-    }
-
-    private void onAdd(ActionEvent ev) {
-        new AddRecordDialog(this, repo).setVisible(true);
-        loadEmployees();
-    }
-
-    private void onDelete(ActionEvent ev) {
-        Employee e = selectedEmployee();
-        if (e == null) {
-            JOptionPane.showMessageDialog(
-                this, "Please select an employee first.",
-                "Warning", JOptionPane.WARNING_MESSAGE
-            );
-            return;
-        }
-        int choice = JOptionPane.showConfirmDialog(
-            this,
-            "Are you sure you want to delete this record?",
-            "Confirm Delete",
-            JOptionPane.YES_NO_OPTION
-        );
-        if (choice == JOptionPane.YES_OPTION) {
-            try {
-                List<Employee> list = repo.loadAll();
-                list.removeIf(emp -> emp.getId().equals(e.getId()));
-                repo.saveAll(list);
-                loadEmployees();
-                JOptionPane.showMessageDialog(this, "Employee Record is deleted.");
-            } catch (IOException ex) {
-                JOptionPane.showMessageDialog(
-                    this,
-                    "Failed to delete: " + ex.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE
-                );
-            }
-        }
-    }
-
-    private void onGeneratePayslip(ActionEvent ev) {
-        Employee e = selectedEmployee();
-        if (e == null) {
-            JOptionPane.showMessageDialog(
-                this, "Please select an employee first.",
-                "Warning", JOptionPane.WARNING_MESSAGE
-            );
-            return;
-        }
-        new PayslipDialog(this, e).setVisible(true);
-    }
-
-    private Employee findById(String id) {
+        String id = (String) tableModel.getValueAt(row, 0);
         try {
-            return repo.loadAll().stream()
-                       .filter(emp -> emp.getId().equals(id))
-                       .findFirst()
-                       .orElse(null);
-        } catch (IOException ex) {
-            JOptionPane.showMessageDialog(
-                this,
-                "Error: " + ex.getMessage(),
-                "Error", JOptionPane.ERROR_MESSAGE
-            );
-            return null;
+            List<Employee> all = repo.loadAll();
+            for (Employee emp : all) {
+                if (emp.getId().equals(id)) {
+                    new UpdateDialog(this, repo, emp, this::loadTableData).setVisible(true);
+                    break;
+                }
+            }
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, "Failed: " + e.getMessage());
         }
+    }
+
+    private void onAdd() {
+        new AddRecordDialog(this, repo, this::loadTableData).setVisible(true);
+    }
+
+    private void onDelete() {
+        int row = table.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Select a record to delete.");
+            return;
+        }
+        int confirm = JOptionPane.showConfirmDialog(this, "Delete this employee?", "Confirm", JOptionPane.YES_NO_OPTION);
+        if (confirm != JOptionPane.YES_OPTION) return;
+
+        String id = (String) tableModel.getValueAt(row, 0);
+        try {
+            List<Employee> all = repo.loadAll();
+            all.removeIf(emp -> emp.getId().equals(id));
+            repo.saveAll(all);
+            loadTableData();
+            JOptionPane.showMessageDialog(this, "Record deleted.");
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, "Failed: " + e.getMessage());
+        }
+    }
+
+    private void onPayslip() {
+        JOptionPane.showMessageDialog(this, "Generate Payslip feature coming soon!", "Message", JOptionPane.INFORMATION_MESSAGE);
     }
 
     public static void main(String[] args) {
-        // Hard-coded path — adjust if necessary
-        String path = "C:\\Users\\DELL\\Downloads\\Correct MotorPH Employee Data.csv";
-        System.out.println("Loading CSV from: " + path);
-        System.out.println("File exists? " + Files.exists(Paths.get(path)));
-
-        SwingUtilities.invokeLater(() ->
-            new EmployeeManagementFrame(path).setVisible(true)
-        );
+        SwingUtilities.invokeLater(() -> {
+            try {
+                CsvEmployeeRepository repo = new CsvEmployeeRepository("C:\\Users\\DELL\\Downloads\\Correct MotorPH Employee Data.csv");
+                new EmployeeManagementFrame(repo).setVisible(true);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Failed to start application: " + ex.getMessage());
+            }
+        });
     }
 }

@@ -2,42 +2,45 @@ package com.motorph.employeeapp.gui;
 
 import com.motorph.employeeapp.model.Employee;
 import com.motorph.employeeapp.repository.EmployeeRepository;
+import com.toedter.calendar.JDateChooser;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
-import java.math.BigDecimal;
 
 public class AddRecordDialog extends JDialog {
     private final EmployeeRepository repo;
+    private final Runnable onSave;
 
-    // form fields (same as UpdateDialog, but no idField)
-    private final JTextField lastNameField         = new JTextField(15);
-    private final JTextField firstNameField        = new JTextField(15);
-    private final JTextField birthdayField         = new JTextField(12); // "MMMM d, yyyy"
-    private final JTextField addressField          = new JTextField(20);
-    private final JTextField phoneField            = new JTextField(12);
-    private final JTextField sssField              = new JTextField(12);
-    private final JTextField philHealthField       = new JTextField(12);
-    private final JTextField tinField              = new JTextField(12);
-    private final JTextField pagIbigField          = new JTextField(12);
-    private final JTextField statusField           = new JTextField(10);
-    private final JTextField positionField         = new JTextField(15);
-    private final JTextField supervisorField       = new JTextField(15);
-    private final JTextField basicSalaryField      = new JTextField(10);
-    private final JTextField riceSubsidyField      = new JTextField(10);
-    private final JTextField phoneAllowanceField   = new JTextField(10);
-    private final JTextField clothingAllowanceField= new JTextField(10);
-    private final JTextField semiMonthlyRateField  = new JTextField(10);
-    private final JTextField hourlyRateField       = new JTextField(10);
+    // Fields
+    private final JTextField lastNameField       = new JTextField(15);
+    private final JTextField firstNameField      = new JTextField(15);
+    private final JDateChooser birthdayChooser   = new JDateChooser();
+    private final JTextField addressField        = new JTextField(15);
+    private final JTextField phoneField          = new JTextField(12);
+    private final JTextField sssField            = new JTextField(12);
+    private final JTextField philHealthField     = new JTextField(12);
+    private final JTextField tinField            = new JTextField(12);
+    private final JTextField pagIbigField        = new JTextField(12);
+    private final JTextField statusField         = new JTextField(10);
+    private final JTextField positionField       = new JTextField(15);
+    private final JTextField supervisorField     = new JTextField(15);
+    private final JTextField basicSalaryField    = new JTextField(10);
+    private final JTextField riceSubsidyField    = new JTextField(10);
+    private final JTextField phoneAllowanceField = new JTextField(10);
+    private final JTextField clothingAllowanceField = new JTextField(10);
+    private final JTextField semiMonthlyRateField   = new JTextField(10);
+    private final JTextField hourlyRateField        = new JTextField(10);
 
-    public AddRecordDialog(Frame owner, EmployeeRepository repo) {
+    public AddRecordDialog(Frame owner, EmployeeRepository repo, Runnable onSave) {
         super(owner, "Add New Employee", true);
         this.repo = repo;
+        this.onSave = onSave;
 
         initLayout();
 
@@ -59,8 +62,8 @@ public class AddRecordDialog extends JDialog {
             "Phone Allowance:", "Clothing Allowance:",
             "Semi-monthly Rate:", "Hourly Rate:"
         };
-        JTextField[] fields = {
-            lastNameField, firstNameField, birthdayField,
+        JComponent[] fields = {
+            lastNameField, firstNameField, birthdayChooser,
             addressField, phoneField, sssField, philHealthField,
             tinField, pagIbigField, statusField, positionField,
             supervisorField, basicSalaryField, riceSubsidyField,
@@ -77,23 +80,32 @@ public class AddRecordDialog extends JDialog {
 
         // Buttons
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton addBtn   = new JButton("Add");
+        JButton saveBtn   = new JButton("Save");
         JButton closeBtn = new JButton("Close");
-        buttons.add(addBtn);
+        buttons.add(saveBtn);
         buttons.add(closeBtn);
 
-        addBtn.addActionListener(this::onAdd);
+        saveBtn.addActionListener(this::onSave);
         closeBtn.addActionListener(_ -> dispose());
 
         getContentPane().setLayout(new BorderLayout());
-        getContentPane().add(new JScrollPane(form), BorderLayout.CENTER);
+        getContentPane().add(form, BorderLayout.CENTER);
         getContentPane().add(buttons, BorderLayout.SOUTH);
     }
 
-    private void onAdd(ActionEvent ev) {
+    private void onSave(ActionEvent ev) {
         try {
-            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMMM d, yyyy");
-            LocalDate bday = LocalDate.parse(birthdayField.getText(), fmt);
+            if (lastNameField.getText().trim().isEmpty() ||
+                firstNameField.getText().trim().isEmpty() ||
+                birthdayChooser.getDate() == null ||
+                sssField.getText().trim().isEmpty()) {
+                throw new IllegalArgumentException("Please fill in all required fields (Last Name, First Name, Birthday, SSS #).");
+            }
+
+            LocalDate bday = birthdayChooser.getDate()
+                .toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
 
             // generate a random ID (or use another strategy)
             String id = UUID.randomUUID().toString();
@@ -103,13 +115,23 @@ public class AddRecordDialog extends JDialog {
                 firstNameField.getText().trim(),
                 lastNameField.getText().trim(),
                 bday,
-                new BigDecimal(basicSalaryField.getText().trim()),
-                new BigDecimal(riceSubsidyField.getText().trim()),
-                new BigDecimal(phoneAllowanceField.getText().trim()),
-                new BigDecimal(clothingAllowanceField.getText().trim()),
-                new BigDecimal(semiMonthlyRateField.getText().trim()),
-                new BigDecimal(hourlyRateField.getText().trim())
+                parseBigDecimal(basicSalaryField.getText().trim()),
+                parseBigDecimal(riceSubsidyField.getText().trim()),
+                parseBigDecimal(phoneAllowanceField.getText().trim()),
+                parseBigDecimal(clothingAllowanceField.getText().trim()),
+                parseBigDecimal(semiMonthlyRateField.getText().trim()),
+                parseBigDecimal(hourlyRateField.getText().trim())
             );
+
+            e.setAddress(addressField.getText().trim());
+            e.setPhone(phoneField.getText().trim());
+            e.setSssNumber(sssField.getText().trim());
+            e.setPhilHealthNumber(philHealthField.getText().trim());
+            e.setTinNumber(tinField.getText().trim());
+            e.setPagIbigNumber(pagIbigField.getText().trim());
+            e.setStatus(statusField.getText().trim());
+            e.setPosition(positionField.getText().trim());
+            e.setSupervisor(supervisorField.getText().trim());
 
             List<Employee> all = repo.loadAll();
             all.add(e);
@@ -117,6 +139,7 @@ public class AddRecordDialog extends JDialog {
 
             JOptionPane.showMessageDialog(this, "Employee Record is saved.");
             dispose();
+            if (onSave != null) onSave.run();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(
                 this,
@@ -125,5 +148,10 @@ public class AddRecordDialog extends JDialog {
                 JOptionPane.ERROR_MESSAGE
             );
         }
+    }
+
+    private BigDecimal parseBigDecimal(String val) {
+        if (val.isEmpty()) return BigDecimal.ZERO;
+        return new BigDecimal(val);
     }
 }
