@@ -1,9 +1,13 @@
 package com.motorph.employeeapp.repository;
 
 import com.motorph.employeeapp.model.Employee;
+import com.opencsv.CSVReader;
+import com.opencsv.CSVWriter;
+import com.opencsv.exceptions.CsvValidationException;
 
-import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.Writer;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -15,8 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * CSV loader that picks up both ID fields and salary columns,
- * defaulting any non‐numeric or missing cell to zero.
+ * CSV-based Employee repository with full saveAll implementation.
  */
 public class CsvEmployeeRepository implements EmployeeRepository {
     private final Path csvPath;
@@ -27,112 +30,125 @@ public class CsvEmployeeRepository implements EmployeeRepository {
         this.csvPath = Paths.get(path);
     }
 
+   @Override
+public List<Employee> loadAll() throws IOException {
+    List<Employee> employees = new ArrayList<>();
+    try (CSVReader csv = new CSVReader(
+             new FileReader(csvPath.toFile(), StandardCharsets.UTF_8))) {
+
+        // 1) Skip header
+        csv.readNext();
+
+        // 2) Read every row
+        String[] parts;
+        while ((parts = csv.readNext()) != null) {
+            // if blank line, skip
+            if (parts.length == 0) continue;
+
+            // build Employee from exactly 19 columns:
+            //   0: ID, 1: Last, 2: First, 3: Birthday,
+            //   4: Address, 5: Phone, 6: SSS, 7: PhilHealth,
+            //   8: TIN, 9: PagIbig, 10: Status, 11: Position,
+            //   12: Supervisor, 13: Basic, 14: Rice, 15: PhoneAllowance,
+            //   16: ClothingAllowance, 17: SemiMonthly, 18: Hourly
+            String id       = parts[0];
+            String last     = parts[1];
+            String first    = parts[2];
+            LocalDate birth = parseDateOrNow(parts[3]);
+
+            BigDecimal basic  = parseDecimalOrZero(parts[13]);
+            BigDecimal rice   = parseDecimalOrZero(parts[14]);
+            BigDecimal phoneA = parseDecimalOrZero(parts[15]);
+            BigDecimal clothA = parseDecimalOrZero(parts[16]);
+            BigDecimal semi   = parseDecimalOrZero(parts[17]);
+            BigDecimal hour   = parseDecimalOrZero(parts[18]);
+
+            Employee e = new Employee(
+              id, first, last, birth,
+              basic, rice, phoneA, clothA, semi, hour
+            );
+
+            // now set all the other text fields
+            e.setAddress(           parts[4] );
+            e.setPhone(             parts[5] );
+            e.setSssNumber(         parts[6] );
+            e.setPhilHealthNumber(  parts[7] );
+            e.setTinNumber(         parts[8] );
+            e.setPagIbigNumber(     parts[9] );
+            e.setStatus(            parts[10]);
+            e.setPosition(          parts[11]);
+            e.setSupervisor(        parts[12]);
+
+            employees.add(e);
+        }
+    } catch (CsvValidationException ex) {
+        throw new IOException("Invalid CSV format", ex);
+    }
+    return employees;
+}
+
     @Override
-    public List<Employee> loadAll() throws IOException {
-        List<Employee> employees = new ArrayList<>();
+    public void saveAll(List<Employee> employees) throws IOException {
+        // Write to a temp file first
+        Path temp = csvPath.resolveSibling(csvPath.getFileName() + ".tmp");
+        try (Writer writer = Files.newBufferedWriter(temp, StandardCharsets.UTF_8);
+             CSVWriter csv = new CSVWriter(writer)) {
+            // 1) Header
+            String[] header = {
+                "Employee", "Last Name", "First Name", "Birthday",
+                "Address", "Phone Number", "SSS Number", "PhilHealth Number",
+                "TIN Number", "Pag-IBIG Number", "Status", "Position",
+                "Supervisor", "Basic Salary", "Rice Subsidy",
+                "Phone Allowance", "Clothing Allowance",
+                "Semi-monthly Rate", "Hourly Rate"
+            };
+            csv.writeNext(header);
 
-        try (BufferedReader reader = Files.newBufferedReader(csvPath, StandardCharsets.UTF_8)) {
-            String headerLine = reader.readLine();
-            if (headerLine == null) return employees;
-
-            String[] headers = headerLine.split(",", -1);
-            int idxId    = findIndex(headers, "employee");
-            int idxLast  = findIndex(headers, "last name");
-            int idxFirst = findIndex(headers, "first name");
-            int idxSSS   = findIndex(headers, "sss");
-            int idxPhil  = findIndex(headers, "philhealth");
-            int idxTIN   = findIndex(headers, "tin");
-            int idxPag   = findIndex(headers, "pag-ibig");
-            int idxBasic = findIndex(headers, "basic salary");
-            int idxRice  = findIndex(headers, "rice subsidy");
-            int idxPhoneA= findIndex(headers, "phone allowance");
-            int idxCloth = findIndex(headers, "clothing allowance");
-            int idxSemi  = findIndex(headers, "semi-monthly rate");
-            int idxHour  = findIndex(headers, "hourly rate");
-            int idxBirth = findIndex(headers, "birthday");
-
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.trim().isEmpty()) continue;
-                String[] parts = line.split(",", -1);
-
-                // skip if ID or name columns missing
-                if (parts.length <= idxFirst) continue;
-
-                String id       = safeGet(parts, idxId);
-                String lastName = safeGet(parts, idxLast);
-                String firstName= safeGet(parts, idxFirst);
-                LocalDate birth = parseDateOrNow(safeGet(parts, idxBirth));
-
-                // parse numeric allowances or default to zero
-                BigDecimal basic    = parseDecimalOrZero(safeGet(parts, idxBasic));
-                BigDecimal rice     = parseDecimalOrZero(safeGet(parts, idxRice));
-                BigDecimal phoneAll = parseDecimalOrZero(safeGet(parts, idxPhoneA));
-                BigDecimal clothAll = parseDecimalOrZero(safeGet(parts, idxCloth));
-                BigDecimal semi     = parseDecimalOrZero(safeGet(parts, idxSemi));
-                BigDecimal hour     = parseDecimalOrZero(safeGet(parts, idxHour));
-
-                Employee e = new Employee(
-                    id, firstName, lastName, birth,
-                    basic, rice, phoneAll, clothAll, semi, hour
-                );
-
-                // populate gov’t IDs
-                e.setSssNumber( safeGet(parts, idxSSS) );
-                e.setPhilHealthNumber( safeGet(parts, idxPhil) );
-                e.setTinNumber( safeGet(parts, idxTIN) );
-                e.setPagIbigNumber( safeGet(parts, idxPag) );
-
-                employees.add(e);
+            // 2) Rows
+            for (Employee e : employees) {
+                String[] row = {
+                    e.getId(),
+                    e.getLastName(),
+                    e.getFirstName(),
+                    e.getBirthDate().format(DATE_FMT),
+                    e.getAddress(),
+                    e.getPhone(),
+                    e.getSssNumber(),
+                    e.getPhilHealthNumber(),
+                    e.getTinNumber(),
+                    e.getPagIbigNumber(),
+                    e.getStatus(),
+                    e.getPosition(),
+                    e.getSupervisor(),
+                    e.getBasicSalary().toPlainString(),
+                    e.getRiceSubsidy().toPlainString(),
+                    e.getPhoneAllowance().toPlainString(),
+                    e.getClothingAllowance().toPlainString(),
+                    e.getGrossSemiMonthlyRate().toPlainString(),
+                    e.getHourlyRate().toPlainString()
+                };
+                csv.writeNext(row);
             }
         }
-
-        return employees;
-    }
-
-    @Override
-    public void saveAll(List<Employee> list) throws IOException {
-        throw new UnsupportedOperationException("Not implemented");
+        // Atomically replace
+        Files.delete(csvPath);
+        Files.move(temp, csvPath);
     }
 
     // Helpers
-
-    /** Returns parts[index] or "" if out of bounds */
-    private String safeGet(String[] parts, int index) {
-        if (index >= 0 && index < parts.length) {
-            return parts[index].trim().replaceAll("^\"|\"$", "");
-        } else {
-            return "";
-        }
-    }
-
-    /** Parses a date in M/d/yyyy or returns today on error */
-    private LocalDate parseDateOrNow(String text) {
+    private LocalDate parseDateOrNow(String txt) {
         try {
-            return LocalDate.parse(text, DATE_FMT);
+            return LocalDate.parse(txt, DATE_FMT);
         } catch (Exception ex) {
             return LocalDate.now();
         }
     }
 
-    /** Parses a BigDecimal or returns zero for any invalid input */
-    private BigDecimal parseDecimalOrZero(String text) {
+    private BigDecimal parseDecimalOrZero(String txt) {
         try {
-            return new BigDecimal(text);
+            return new BigDecimal(txt);
         } catch (Exception ex) {
             return BigDecimal.ZERO;
         }
-    }
-
-    /** Finds first header containing keyword (case-insensitive) or -1 */
-    private int findIndex(String[] headers, String keyword) {
-        if (keyword == null) return -1;
-        String key = keyword.toLowerCase();
-        for (int i = 0; i < headers.length; i++) {
-            if (headers[i].toLowerCase().contains(key)) {
-                return i;
-            }
-        }
-        return -1;
     }
 }
