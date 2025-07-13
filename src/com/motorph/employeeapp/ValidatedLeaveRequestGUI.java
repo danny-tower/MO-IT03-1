@@ -33,29 +33,60 @@ public class ValidatedLeaveRequestGUI extends JPanel {
         add(new JPanel()); add(submitButton);
     }
 
-    private void handleSubmit(ActionEvent e) {
-        String id = empIdField.getText().trim();
-        Employee emp = dept.getEmployees().stream()
-                          .filter(x -> x.getEmployeeID().equalsIgnoreCase(id))
-                          .findFirst()
-                          .orElse(null);
-        if (emp == null) {
-            JOptionPane.showMessageDialog(this, "Employee not found.", "Error", JOptionPane.ERROR_MESSAGE);
+    /**
+     * Handles the Submit button click event for leave requests.
+     */
+    private void handleSubmit(ActionEvent event) {
+        String employeeId = empIdField.getText().trim();
+        String startDateText = startDateField.getText().trim();
+        String endDateText = endDateField.getText().trim();
+        String reason = reasonField.getText().trim();
+        if (!validateInputs(employeeId, startDateText, endDateText, reason)) {
+            return;
+        }
+        Employee employee = findEmployeeById(employeeId);
+        if (employee == null) {
+            JOptionPane.showMessageDialog(this, "Employee not found for ID: " + employeeId, "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
         try {
-            LocalDate start = LocalDate.parse(startDateField.getText().trim());
-            LocalDate end   = LocalDate.parse(endDateField.getText().trim());
-            String reason   = reasonField.getText().trim();
-            if (reason.isEmpty()) throw new IllegalArgumentException();
-
-            new LeaveRequest("L" + System.currentTimeMillis(), start, end, reason, emp);
-            JOptionPane.showMessageDialog(this, "Leave request submitted!", "Success", JOptionPane.INFORMATION_MESSAGE);
-
-            empIdField.setText(""); startDateField.setText("");
-            endDateField.setText(""); reasonField.setText("");
+            LocalDate start = LocalDate.parse(startDateText);
+            LocalDate end   = LocalDate.parse(endDateText);
+            new LeaveRequest("L" + System.currentTimeMillis(), start, end, reason, employee);
+            JOptionPane.showMessageDialog(this, "Leave request submitted for: " + employee.getFirstName() + " " + employee.getLastName(), "Success", JOptionPane.INFORMATION_MESSAGE);
+            clearFields();
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Invalid input.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Invalid date format. Please use YYYY-MM-DD.", "Error", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    /**
+     * Validates the input fields for leave request.
+     */
+    private boolean validateInputs(String id, String start, String end, String reason) {
+        if (id.isEmpty() || start.isEmpty() || end.isEmpty() || reason.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "All fields are required.", "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Finds an employee by ID in the department.
+     */
+    private Employee findEmployeeById(String id) {
+        return dept.getEmployees().stream()
+                .filter(x -> x.getEmployeeID().equalsIgnoreCase(id))
+                .findFirst().orElse(null);
+    }
+
+    /**
+     * Clears all input fields.
+     */
+    private void clearFields() {
+        empIdField.setText("");
+        startDateField.setText("");
+        endDateField.setText("");
+        reasonField.setText("");
     }
 }

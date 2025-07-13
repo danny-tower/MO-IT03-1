@@ -5,12 +5,14 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 
 public class ValidatedEmployeeGUI extends JPanel {
-    private Department dept;
     private JTextField idField, nameField, positionField;
     private JButton addButton;
 
-    public ValidatedEmployeeGUI(Department dept) {
-        this.dept = dept;
+    /**
+     * Constructs the Add Employee panel. The department parameter is reserved for future use.
+     */
+    public ValidatedEmployeeGUI(Department department) {
+        // You can use the department parameter in the future to add employees to a department list
         setLayout(new GridLayout(4, 2, 5, 5));
         setBorder(BorderFactory.createTitledBorder("Add Employee"));
 
@@ -29,16 +31,44 @@ public class ValidatedEmployeeGUI extends JPanel {
         add(addButton);
     }
 
-    private void handleAdd(ActionEvent e) {
-        String id   = idField.getText().trim();
-        String name = nameField.getText().trim();
-        String pos  = positionField.getText().trim();
-        if (id.isEmpty() || name.isEmpty() || pos.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "All fields are required.", "Error", JOptionPane.ERROR_MESSAGE);
+    /**
+     * Handles the Add button click event.
+     */
+    private void handleAdd(ActionEvent event) {
+        String employeeId   = idField.getText().trim();
+        String employeeName = nameField.getText().trim();
+        String employeePosition  = positionField.getText().trim();
+        if (!validateInputs(employeeId, employeeName, employeePosition)) {
             return;
         }
-        new Employee(id, name, pos, dept);
-        JOptionPane.showMessageDialog(this, "Employee added!");
-        idField.setText(""); nameField.setText(""); positionField.setText("");
+        Employee employee = createEmployee(employeeId, employeeName, employeePosition);
+        // In a real app, you would add the employee to a list or database here
+        JOptionPane.showMessageDialog(this, "Employee added: " + employee.getFirstName() + " " + employee.getLastName());
+        clearFields();
+    }
+
+    /**
+     * Creates a new Employee instance. Currently uses LocalDate.now() as a placeholder for birth date.
+     */
+    private Employee createEmployee(String id, String name, String position) {
+        // You may want to split name into first/last or add a birth date picker in the future
+        return new Employee(id, name, position, java.time.LocalDate.now());
+    }
+
+    /**
+     * Clears all input fields.
+     */
+    private void clearFields() {
+        idField.setText("");
+        nameField.setText("");
+        positionField.setText("");
+    }
+
+    private boolean validateInputs(String id, String name, String position) {
+        if (id.isEmpty() || name.isEmpty() || position.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "All fields are required.", "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        return true;
     }
 }
