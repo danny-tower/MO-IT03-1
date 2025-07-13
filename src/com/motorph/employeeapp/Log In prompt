@@ -1,0 +1,26 @@
+public static void main(String[] args) {
+    Console console = System.console();
+    if (console == null) {
+        System.err.println("No console available");
+        System.exit(1);
+    }
+    Map<String,String> accounts;
+    try {
+        accounts = loadAccounts("accounts.csv");
+    } catch (IOException e) {
+        System.err.println("Error reading accounts.csv: " + e.getMessage());
+        return;
+    }
+    System.out.println("=== MotorPH Employee App Login ===");
+    String user = console.readLine("Username: ");
+    char[] pwd = console.readPassword("Password: ");
+    String password = new String(pwd);
+
+    if (password.equals(accounts.get(user))) {
+        System.out.println("Login successful. Welcome, " + user + "!");
+        // proceed to menu or other modules
+    } else {
+        System.err.println("Login failed. Exiting.");
+        System.exit(1);
+    }
+}
