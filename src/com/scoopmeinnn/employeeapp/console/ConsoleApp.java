@@ -1,5 +1,6 @@
 package com.scoopmeinnn.employeeapp.console;
 
+import com.motorph.employeeapp.LoginService;
 import com.scoopmeinnn.employeeapp.model.Employee;
 import com.scoopmeinnn.employeeapp.pay.SalaryCalculator;
 import com.scoopmeinnn.employeeapp.repository.CsvEmployeeRepository;
@@ -17,6 +18,18 @@ import java.util.Scanner;
  */
 public class ConsoleApp {
     public static void main(String[] args) {
+        Scanner in = new Scanner(System.in);
+        System.out.println("=== MotorPH Employee App Login ===");
+        System.out.print("Username: ");
+        String user = in.nextLine();
+        System.out.print("Password: ");
+        String password = in.nextLine();
+        if (!LoginService.validate(user, password)) {
+            System.err.println("Login failed. Exiting.");
+            System.exit(1);
+        }
+        System.out.println("Login successful. Welcome, " + user + "!\n");
+
         // Initialize repository with the correct CSV path
         String csvPath = "C:/Users/DELL/Downloads/Correct MotorPH Employee Data.csv";
         EmployeeRepository repo = new CsvEmployeeRepository(csvPath);
@@ -29,11 +42,11 @@ public class ConsoleApp {
             return;
         }
 
-        try (Scanner in = new Scanner(System.in)) {
-            while (true) {
-                System.out.println("=== Employee Management Console ===");
-                System.out.println("1) List all employees");
-                System.out.println("2) View a specific employee");
+        // Reuse the existing Scanner 'in' instead of redeclaring it
+        while (true) {
+            System.out.println("=== Employee Management Console ===");
+            System.out.println("1) List all employees");
+            System.out.println("2) View a specific employee");
                 System.out.println("3) Create new employee");
                 System.out.println("4) Update an employee");
                 System.out.println("5) Delete an employee");
