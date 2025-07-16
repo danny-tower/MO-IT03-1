@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class LoginService {
-    private static final String ACCOUNTS_FILE = "accounts.csv";
+    private static final String ACCOUNTS_FILE = "src/com/motorph/employeeapp/account.csv";
 
     public static Map<String, String> loadAccounts() throws IOException {
         Map<String, String> accounts = new HashMap<>();

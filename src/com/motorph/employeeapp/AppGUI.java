@@ -9,6 +9,19 @@ import javax.swing.SwingUtilities;
  */
 public class AppGUI {
     public static void main(String[] args) {
+        // Show login dialog before launching the main window
+        JFrame dummy = new JFrame();
+        dummy.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        dummy.setSize(0, 0);
+        dummy.setLocationRelativeTo(null);
+
+        LoginDialog loginDlg = new LoginDialog(dummy);
+        loginDlg.setVisible(true);
+        if (!loginDlg.isSucceeded()) {
+            System.exit(0);
+        }
+        dummy.dispose();
+
         SwingUtilities.invokeLater(() -> {
             // create the main window
             JFrame frame = new JFrame("MotorPH Employee App (GUI Version)");
