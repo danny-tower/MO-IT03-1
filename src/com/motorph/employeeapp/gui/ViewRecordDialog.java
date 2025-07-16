@@ -15,7 +15,6 @@ public class ViewRecordDialog extends JDialog {
         c.insets = new Insets(4,4,4,4);
         c.anchor = GridBagConstraints.WEST;
 
-        // Same field order as Charvilla's
         String[] labels = {
             "Employee #:", "Last Name:", "First Name:", "Birthday:", "Address:", "Phone:", "SSS #:",
             "PhilHealth #:", "TIN #:", "Pag-IBIG #:", "Status:", "Position:", "Supervisor:",
