@@ -125,3 +125,6 @@ lr.grarboleda@mmdc.mcl.edu.ph
 
 Catherine Kate Plenos
 lr.ckplenos@mmdc.mcl.edu.ph
+
+Leianna Khay Cruz
+lr.lkcruz@mmdc.mcl.edu.ph
