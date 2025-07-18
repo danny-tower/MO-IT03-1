@@ -1,130 +1,136 @@
-# MotorPH Employee App (GUI Version)
+# MotorPH Employee Management System
 
 ## Overview  
-This is a Java Swing desktop application that allows you to manage Employees, Payroll, and Leave Requests using full Create/Read/Update/Delete (CRUD) functionality. A simple login screen secures access. All data is stored in plain CSV files:  
-- `accounts.csv`  
-- `employees.csv`  
-- `payroll.csv`  
-- `leaverequests.csv`  
+This is a Java Swing desktop application for managing employee records with full Create/Read/Update/Delete (CRUD) functionality. The application features a secure login system and loads employee data from CSV files. It provides a modern, professional interface for viewing employee information and generating payslips.
 
 ---
 
 ## Features
 
-**1. Login Screen**  
-- Credentials are loaded from `accounts.csv` (username,password)  
-  - Default: `admin,admin123`  
-- If login fails or is canceled, the application exits.
+**1. Login Authentication**  
+- Secure login with username/password validation
+- Default credentials: `admin` / `admin123`
+- Application exits if login fails or is canceled
 
-**2. Employees Tab**  
-- **View:** displays all employees (ID, Name, Position)  
-- **Add:** enter ID, Name, Position and click **Add**  
-- **Update:** select a row, click **Update**, edit fields, and save  
-- **Delete:** select a row and click **Delete** to remove that employee
+**2. Employee Management**  
+- **View:** Display all employees in a professional table format
+- **Add:** Add new employee records with complete information
+- **Update:** Edit existing employee information
+- **Delete:** Remove employee records with confirmation
+- **View Details:** View detailed employee information and payslip
 
-**3. Payroll Tab**  
-- **View:** displays all payroll entries (Employee ID, Amount)  
-- **Add:** enter Employee ID and Amount and click **Add**  
-- **Update:** select a row, click **Update**, enter new amount, and save  
-- **Delete:** select a row and click **Delete** to remove that entry
-
-**4. Leave Requests Tab**  
-- **View:** displays all leave requests (Employee ID, Start Date, End Date, Reason)  
-- **Submit:** fill in fields and click **Submit** to add a request  
-- **Update:** select a row, click **Update**, edit dates/reason, and save  
-- **Delete:** select a row and click **Delete** to remove that request
+**3. Modern UI**  
+- Clean, professional interface with color-coded buttons
+- Responsive table with alternating row colors
+- Hover effects and intuitive navigation
+- Proper error handling and user feedback
 
 ---
 
-## Screenshots
+## Project Structure
 
-> Screenshots of the GUI and features (e.g., login screen, employee panel, payroll calculator)
-> <img width="1080" height="661" alt="image" src="https://github.com/user-attachments/assets/0c30d4e9-0497-420d-86e1-00afeb20222c" />
+```
+MO-IT03/
+├── bin/                          # Compiled Java classes
+│   └── com/motorph/employeeapp/
+│       ├── gui/                  # GUI classes
+│       ├── model/                # Data models
+│       ├── repository/           # Data access layer
+│       └── pay/                  # Payroll calculations
+├── src/                          # Java source code
+│   └── com/motorph/employeeapp/
+│       ├── gui/                  # GUI source files
+│       ├── model/                # Model source files
+│       ├── repository/           # Repository source files
+│       └── pay/                  # Payroll source files
+├── lib/                          # External JAR dependencies
+│   ├── opencsv-5.8.jar          # CSV reading library
+│   ├── commons-lang3-3.12.0.jar # Utilities
+│   ├── jcalendar-1.4.jar        # Date picker component
+│   └── flatlaf-3.1.jar          # Modern look and feel
+├── data/                         # Application data
+│   └── MotorPH Employee Record.csv # Employee database
+├── docs/                         # Documentation
+├── archive/                      # Archived/old files
+└── README.md                     # This file
+```
 
 ---
 
 ## Prerequisites  
-- Java Development Kit (JDK) 8 or higher installed  
-- A command-line terminal (PowerShell, CMD, bash, etc.)
-
-## Objectives
-- To automate payroll processing and reduce manual computation errors
-- To track and log employee attendance efficiently
-- To generate printable payroll reports and summaries
-- To ensure secure and role-specific access for system users
-
-## Technologies Used
-- **Programming Language:** Java
-- **GUI Framework:** Java Swing
-- **Database:** MySQL or SQLite
-- **Report Tools:** iText for PDF generation, Apache POI (optional for Excel export)
-
----
-
-****USER ROLES****
-| Role                  | Responsibilities                                      |
-| --------------------- | ----------------------------------------------------- |
-| **Admin**             | Full access to all modules, user and data management  |
-| **HR Staff**          | Manage employee profiles and schedules                |
-| **Finance & Payroll** | Compute salaries, generate reports, manage deductions |
-| **Department Head**   | View and approve employee attendance and overtime     |
-| **Employee**          | View personal attendance and payslip                  |
+- Java Development Kit (JDK) 8 or higher
+- Windows Command Prompt or PowerShell
 
 ---
 
 ## How to Compile & Run
 
-```bash
-cd path/to/MO-IT03
-javac -d . motorphemployeeapp/src/com/motorph/employeeapp/*.java
-java com.motorph.employeeapp.AppGUI
+### Step 1: Navigate to Project Directory
+```cmd
+cd C:\Users\leian\MO-IT03\MO-IT03
 ```
 
-Compile all source files with -d . to mirror package structure.
+### Step 2: Compile All Java Files
+```cmd
+javac -cp "lib/*" -d bin src/com/motorph/employeeapp/gui/*.java src/com/motorph/employeeapp/model/*.java src/com/motorph/employeeapp/repository/*.java src/com/motorph/employeeapp/pay/*.java
+```
 
-Run the main class.
+### Step 3: Run the Application
+```cmd
+java -cp "C:\Users\leian\MO-IT03\MO-IT03\bin;C:\Users\leian\MO-IT03\MO-IT03\lib\*" com.motorph.employeeapp.gui.EmployeeManagementFrame
+```
 
-Login using credentials from accounts.csv (default admin/admin123).
-
-### CSV Files
-- accounts.csv
-  - username,password
-  - admin,admin123
-- employees.csv
-  - ID,Name,Position
-- payroll.csv
-  - EmployeeID,Amount
-- leaverequests.csv
-  - EmployeeID,StartDate,EndDate,Reason
-
-### Project Structure
-MO-IT03/
-├ .github/
-├ motorphemployeeapp/
-│ └ src/com/motorph/employeeapp/
-│ ├ AppGUI.java
-│ ├ LoginDialog.java
-│ ├ Department.java
-│ ├ ValidatedEmployeeGUI.java
-│ ├ ValidatedPayrollGUI.java
-│ └ ValidatedLeaveRequestGUI.java
-├ accounts.csv
-├ employees.csv
-├ payroll.csv
-├ leaverequests.csv
-└ README.md
+### Login Credentials
+- **Username:** `admin`
+- **Password:** `admin123`
 
 ---
 
-**Academic Purpose**
-This project was developed as part of our coursework for Computer Programming 2, under the guidance of Mr. John Ray Hernani, and is intended to demonstrate knowledge in software engineering, database integration, and desktop application development.
+## Technologies Used
+- **Programming Language:** Java
+- **GUI Framework:** Java Swing
+- **Data Storage:** CSV files
+- **Libraries:** OpenCSV, JCalendar, FlatLaf, Commons Lang
 
-Author / Contact
-Ghian Renzen Arboleda
-lr.grarboleda@mmdc.mcl.edu.ph
+---
 
-Catherine Kate Plenos
-lr.ckplenos@mmdc.mcl.edu.ph
+## Key Classes
 
-Leianna Khay Cruz
-lr.lkcruz@mmdc.mcl.edu.ph
+| Class | Purpose |
+|-------|---------|
+| `EmployeeManagementFrame` | Main application window with login and employee table |
+| `Employee` | Employee data model |
+| `CsvEmployeeRepository` | CSV file data access |
+| `AddRecordDialog` | Dialog for adding new employees |
+| `UpdateDialog` | Dialog for editing employee information |
+| `PayslipSplitDialog` | Employee details and payslip viewer |
+
+---
+
+## Data File
+
+The application uses `data/MotorPH Employee Record.csv` which contains:
+- Employee ID, Name, Contact Information
+- Government IDs (SSS, PhilHealth, TIN, Pag-IBIG)
+- Position, Salary, and other employment details
+
+---
+
+## Important Notes
+
+1. **Always run from the MO-IT03 directory** to ensure correct file paths
+2. **The CSV file must exist** in the `data/` folder
+3. **All JAR dependencies must be** in the `lib/` folder
+4. **Use absolute paths** if relative paths don't work in your environment
+
+---
+
+## Academic Purpose
+This project was developed as part of our coursework for Computer Programming 2 with the guidance of Mr. John Ray Hernani
+
+---
+
+## Authors
+- Ghian Renzen Arboleda - lr.grarboleda@mmdc.mcl.edu.ph
+- Catherine Kate Plenos - lr.ckplenos@mmdc.mcl.edu.ph  
+- Leianna Khay Cruz - lr.lkcruz@mmdc.mcl.edu.ph

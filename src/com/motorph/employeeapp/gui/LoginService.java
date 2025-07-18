@@ -1,4 +1,4 @@
-package com.motorph.employeeapp;
+package com.motorph.employeeapp.gui;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
