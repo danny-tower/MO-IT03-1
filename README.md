@@ -67,8 +67,9 @@ MO-IT03/
 
 ### Step 1: Navigate to Project Directory
 ```cmd
-cd C:\Users\leian\MO-IT03\MO-IT03
+cd <path-to-project>\MO-IT03
 ```
+*Replace `<path-to-project>` with the actual path where you cloned/downloaded the project*
 
 ### Step 2: Compile All Java Files
 ```cmd
@@ -77,8 +78,9 @@ javac -cp "lib/*" -d bin src/com/motorph/employeeapp/gui/*.java src/com/motorph/
 
 ### Step 3: Run the Application
 ```cmd
-java -cp "C:\Users\leian\MO-IT03\MO-IT03\bin;C:\Users\leian\MO-IT03\MO-IT03\lib\*" com.motorph.employeeapp.gui.EmployeeManagementFrame
+java -cp "<path-to-project>\MO-IT03\bin;<path-to-project>\MO-IT03\lib\*" com.motorph.employeeapp.gui.EmployeeManagementFrame
 ```
+*Replace `<path-to-project>` with the actual path where you cloned/downloaded the project*
 
 ### Login Credentials
 - **Username:** `admin`
