@@ -22,7 +22,7 @@ public class UpdateDialog extends JDialog {
     private final JTextField lastNameField       = new JTextField(15);
     private final JTextField firstNameField      = new JTextField(15);
     private final JDateChooser birthdayChooser   = new JDateChooser();
-    private final JTextField addressField        = new JTextField(20);
+    private final JTextField addressField        = new JTextField(30);
     private final JTextField phoneField          = new JTextField(12);
     private final JTextField sssField            = new JTextField(12);
     private final JTextField philHealthField     = new JTextField(12);
@@ -60,6 +60,15 @@ public class UpdateDialog extends JDialog {
         c.insets = new Insets(4,4,4,4);
         c.anchor = GridBagConstraints.WEST;
 
+        // Give the date chooser more horizontal space
+        birthdayChooser.setPreferredSize(
+            new Dimension(200, birthdayChooser.getPreferredSize().height)
+        );
+
+        // Let the right-hand column expand
+        c.weightx = 1.0;
+        c.fill    = GridBagConstraints.HORIZONTAL;
+
         String[] labels = {
             "Employee #:", "Last Name:", "First Name:", "Birthday:",
             "Address:", "Phone:", "SSS #:", "PhilHealth #:", "TIN #:",
@@ -77,9 +86,17 @@ public class UpdateDialog extends JDialog {
         };
 
         for (int i = 0; i < labels.length; i++) {
-            c.gridx = 0; c.gridy = i;
+            // Label column
+            c.gridx = 0;
+            c.gridy = i;
+            c.weightx = 0;
+            c.fill    = GridBagConstraints.NONE;
             form.add(new JLabel(labels[i]), c);
+
+            // Field column
             c.gridx = 1;
+            c.weightx = 1.0;
+            c.fill    = GridBagConstraints.HORIZONTAL;
             form.add(fields[i], c);
         }
         idField.setEditable(false);
@@ -121,7 +138,6 @@ public class UpdateDialog extends JDialog {
 
     private void onSave(ActionEvent ev) {
         try {
-            // required checks
             if (lastNameField.getText().trim().isEmpty()
              || firstNameField.getText().trim().isEmpty()
              || birthdayChooser.getDate() == null
@@ -130,7 +146,6 @@ public class UpdateDialog extends JDialog {
                     "Last Name, First Name, Birthday & SSS # are required.");
             }
 
-            // apply changes to the in-memory Employee
             LocalDate bday = birthdayChooser.getDate()
                 .toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
             employee.setLastName( lastNameField.getText().trim() );
@@ -152,7 +167,6 @@ public class UpdateDialog extends JDialog {
             employee.setGrossSemiMonthlyRate(new BigDecimal(semiMonthlyRateField.getText().trim()));
             employee.setHourlyRate(new BigDecimal(hourlyRateField.getText().trim()));
 
-            // 1) reload entire list, 2) replace, 3) saveAll
             List<Employee> all = repo.loadAll();
             for (int i = 0; i < all.size(); i++) {
                 if (all.get(i).getId().equals(employee.getId())) {
@@ -168,10 +182,8 @@ public class UpdateDialog extends JDialog {
 
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(
-                this,
-                "Invalid input: " + ex.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE
+                this, "Invalid input: " + ex.getMessage(),
+                "Error", JOptionPane.ERROR_MESSAGE
             );
         }
     }

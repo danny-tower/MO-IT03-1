@@ -335,7 +335,7 @@ public class EmployeeManagementFrame extends JFrame {
         
         final boolean[] loginSuccess = {false};
         
-        loginBtn.addActionListener(e -> {
+        loginBtn.addActionListener(_ -> {
             String username = usernameField.getText().trim();
             String password = new String(passwordField.getPassword()).trim();
             
@@ -350,7 +350,7 @@ public class EmployeeManagementFrame extends JFrame {
             }
         });
         
-        cancelBtn.addActionListener(e -> {
+        cancelBtn.addActionListener(_ -> {
             loginSuccess[0] = false;
             loginDialog.dispose();
         });

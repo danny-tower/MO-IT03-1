@@ -1,6 +1,7 @@
 package com.motorph.employeeapp.gui;
 
 import com.motorph.employeeapp.model.Employee;
+
 import javax.swing.*;
 import java.awt.*;
 import java.time.format.DateTimeFormatter;
@@ -14,6 +15,10 @@ public class ViewRecordDialog extends JDialog {
         GridBagConstraints c = new GridBagConstraints();
         c.insets = new Insets(4,4,4,4);
         c.anchor = GridBagConstraints.WEST;
+
+        // make the right column expand
+        c.weightx = 1.0;
+        c.fill    = GridBagConstraints.HORIZONTAL;
 
         String[] labels = {
             "Employee #:", "Last Name:", "First Name:", "Birthday:", "Address:", "Phone:", "SSS #:",
@@ -44,12 +49,36 @@ public class ViewRecordDialog extends JDialog {
         };
 
         for (int i = 0; i < labels.length; i++) {
-            c.gridx = 0; c.gridy = i;
+            // label
+            c.gridx = 0; 
+            c.gridy = i;
+            c.weightx = 0;
+            c.fill    = GridBagConstraints.NONE;
             form.add(new JLabel(labels[i]), c);
+
+            // field
             c.gridx = 1;
-            JTextField field = new JTextField(values[i], 18);
-            field.setEditable(false);
-            form.add(field, c);
+            c.weightx = 1.0;
+            c.fill    = GridBagConstraints.HORIZONTAL;
+
+            if ("Address:".equals(labels[i])) {
+                // multi-line address
+                JTextArea area = new JTextArea(values[i]);
+                area.setLineWrap(true);
+                area.setWrapStyleWord(true);
+                area.setEditable(false);
+                area.setBackground(UIManager.getColor("TextField.background"));
+                area.setBorder(UIManager.getBorder("TextField.border"));
+                area.setRows(3);
+                JScrollPane sp = new JScrollPane(area);
+                sp.setPreferredSize(new Dimension(300, area.getPreferredSize().height * 2));
+                form.add(sp, c);
+            } else {
+                JTextField field = new JTextField(values[i], 30);
+                field.setEditable(false);
+                field.setBorder(null);
+                form.add(field, c);
+            }
         }
 
         // Close button
